@@ -1,5 +1,0 @@
-<template>
-  <section>
-    <h1>Agent</h1>
-  </section>
-</template>

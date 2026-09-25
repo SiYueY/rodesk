@@ -8,7 +8,8 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.ts,.tsx",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "vitest run"
   },
   "dependencies": {
     "@vueuse/core": "latest",
@@ -21,6 +22,9 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.2",
+    "@typescript-eslint/parser": "^8.70.1",
     "@vitejs/plugin-vue": "latest",
     "autoprefixer": "latest",
     "eslint": "latest",
@@ -28,9 +32,10 @@
     "postcss": "latest",
     "prettier": "latest",
     "prettier-plugin-tailwindcss": "latest",
-    "tailwindcss": "latest",
-    "typescript": "latest",
+    "tailwindcss": "^3.4.19",
+    "typescript": "5.9.3",
     "vite": "latest",
+    "vitest": "^5.0.1",
     "vue-tsc": "latest"
   }
 }

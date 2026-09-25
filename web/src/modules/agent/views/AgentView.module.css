@@ -1,0 +1,102 @@
+.appFrame {
+  position: relative;
+  display: grid;
+  grid-template-rows: 100%;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-base);
+  transition: grid-template-columns var(--ds-transition-duration-slow, 200ms) var(--ds-ease-in-out);
+}
+.appFrame.dragging {
+  transition: none;
+}
+.leftColumn {
+  grid-column: 1;
+}
+.centerColumn {
+  grid-column: 2;
+}
+.rightColumn {
+  grid-column: 3;
+}
+.openSidebar,
+.openRightbar {
+  position: absolute;
+  z-index: 5;
+  top: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dsw-radius-sm);
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  cursor: pointer;
+}
+.openSidebar {
+  left: 16px;
+}
+.openRightbar {
+  right: 16px;
+}
+.openSidebar:hover,
+.openRightbar:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+.openSidebar > img {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+.resizeHandle {
+  position: absolute;
+  z-index: 15;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  margin-left: -4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+.resizeHandle:focus-visible {
+  outline: 2px solid var(--dsw-static-deepseek-500);
+  outline-offset: -2px;
+}
+.sidebarScrim {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .appFrame {
+    transition: none;
+  }
+}
+@media (max-width: 1023px) {
+  .appFrame {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .centerColumn {
+    grid-column: 1;
+  }
+  .appFrame.sidebarOpen .leftColumn {
+    position: absolute;
+    z-index: 20;
+    inset: 0 auto 0 0;
+    width: 280px;
+    box-shadow: 0 8px 32px rgb(0 0 0 / 14%);
+  }
+  .sidebarScrim {
+    display: block;
+    position: absolute;
+    z-index: 10;
+    inset: 0;
+    border: 0;
+    background: rgb(0 0 0 / 16%);
+  }
+}

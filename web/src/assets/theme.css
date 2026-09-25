@@ -1,0 +1,69 @@
+/* Selected light/dark aliases are copied from DeepSeek Harness ui-theme. */
+:root {
+  --dsw-font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --dsw-font-family-brand: 'Montserrat', var(--dsw-font-family);
+  --ds-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ds-transition-duration: 0.2s;
+  --dsw-radius-xs: 4px;
+  --dsw-radius-sm: 8px;
+  --dsw-radius-md: 12px;
+  --dsw-radius-lg: 16px;
+  --dsw-radius-xl: 20px;
+  --dsw-radius-panel: 28px;
+  --dsw-static-neutral-bluish-00: rgb(255 255 255);
+  --dsw-static-neutral-bluish-50: rgb(249 250 251);
+  --dsw-static-neutral-bluish-100: rgb(235 238 242);
+  --dsw-static-neutral-bluish-400: rgb(173 178 184);
+  --dsw-static-neutral-bluish-600: rgb(129 133 140);
+  --dsw-static-neutral-bluish-700: rgb(97 102 107);
+  --dsw-static-neutral-bluish-1000: rgb(15 17 21);
+  --dsw-static-deepseek-100: rgb(228 237 253);
+  --dsw-static-deepseek-200: rgb(211 226 255);
+  --dsw-static-deepseek-400: rgb(122 170 255);
+  --dsw-static-deepseek-450: rgb(86 134 254);
+  --dsw-static-deepseek-500: rgb(65 118 230);
+  --dsw-alias-bg-base: var(--dsw-static-neutral-bluish-00);
+  --dsw-alias-label-primary: var(--dsw-static-neutral-bluish-1000);
+  --dsw-alias-label-secondary: var(--dsw-static-neutral-bluish-700);
+  --dsw-alias-label-tertiary: var(--dsw-static-neutral-bluish-600);
+  --dsw-alias-label-caption: var(--dsw-static-neutral-bluish-400);
+  --dsw-alias-border-l1: rgb(0 0 0 / 4%);
+  --dsw-alias-border-l2: rgb(0 0 0 / 10%);
+  --dsw-alias-border-l3: rgb(0 0 0 / 12%);
+  --dsw-alias-interactive-bg-hover: rgb(38 49 72 / 6%);
+  --dsw-alias-state-business-tertiary: var(--dsw-static-deepseek-100);
+  --dsw-alias-button-info-fill: var(--dsw-static-deepseek-500);
+  --dsw-specific-input-major: var(--dsw-static-neutral-bluish-00);
+  --dsw-specific-sidebar-fill: var(--dsw-static-neutral-bluish-50);
+  --dsw-specific-sidebar-nav-item-active: var(--dsw-static-neutral-bluish-100);
+  --dsw-specific-sidebar-nav-item-hover: rgb(241 243 245);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --dsw-static-neutral-bluish-00: rgb(21 21 23);
+    --dsw-static-neutral-bluish-50: rgb(249 250 251);
+    --dsw-static-neutral-bluish-100: rgb(35 35 36);
+    --dsw-static-neutral-bluish-400: rgb(129 133 140);
+    --dsw-static-neutral-bluish-600: rgb(129 133 140);
+    --dsw-static-neutral-bluish-700: rgb(190 193 198);
+    --dsw-static-neutral-bluish-1000: rgb(249 250 251);
+    --dsw-alias-bg-base: rgb(21 21 23);
+    --dsw-alias-label-primary: rgb(249 250 251);
+    --dsw-alias-label-secondary: rgb(190 193 198);
+    --dsw-alias-label-tertiary: rgb(159 165 172);
+    --dsw-alias-label-caption: rgb(129 133 140);
+    --dsw-alias-border-l1: rgb(255 255 255 / 6%);
+    --dsw-alias-border-l2: rgb(255 255 255 / 12%);
+    --dsw-alias-border-l3: rgb(255 255 255 / 16%);
+    --dsw-alias-interactive-bg-hover: rgb(255 255 255 / 8%);
+    --dsw-alias-state-business-tertiary: rgb(52 65 91);
+    --dsw-alias-button-info-fill: var(--dsw-static-deepseek-400);
+    --dsw-specific-input-major: rgb(44 44 46);
+    --dsw-specific-sidebar-fill: rgb(27 27 28);
+    --dsw-specific-sidebar-nav-item-active: rgb(67 69 74);
+    --dsw-specific-sidebar-nav-item-hover: rgb(44 44 46);
+  }
+}

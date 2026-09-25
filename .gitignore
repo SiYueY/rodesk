@@ -19,3 +19,6 @@ release/
 # OS
 .DS_Store
 Thumbs.db
+
+# Deepseek Harness
+deepseek-harness/

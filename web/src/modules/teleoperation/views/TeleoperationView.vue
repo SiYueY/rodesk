@@ -15,7 +15,9 @@ import OverlayPanel from '../components/controls/OverlayPanel.vue';
 import TelemetryReadout from '../components/controls/TelemetryReadout.vue';
 import VirtualJoystick from '../components/controls/VirtualJoystick.vue';
 import StopControl from '../components/controls/StopControl.vue';
-import TeleoperationCamera from '../components/camera/TeleoperationCamera.vue';
+import CameraLayer from '../components/camera/CameraLayer.vue';
+import { MockCameraService } from '../mock/MockCameraService';
+import { useCamera } from '../composables/useCamera';
 import { useTeleoperationSession } from '../composables/useTeleoperationSession';
 import { useTeleoperationLayout } from '../composables/useTeleoperationLayout';
 import type { JoystickAxes } from '../types';
@@ -25,6 +27,11 @@ type OpenPanel = 'info' | 'status' | null;
 const router = useRouter();
 const { connectionStatus, error, stop } = useTeleoperationSession();
 const { layoutStyle } = useTeleoperationLayout();
+const {
+  status: cameraStatus,
+  stream: cameraStream,
+  error: cameraError,
+} = useCamera(new MockCameraService(), 'ROBOT-01', 'front');
 const stopDisabled = computed(() => connectionStatus.value !== 'connected');
 const leftAxes = ref<JoystickAxes>({ x: 0, y: 0 });
 const rightAxes = ref<JoystickAxes>({ x: 0, y: 0 });
@@ -53,6 +60,10 @@ function togglePanel(panel: Exclude<OpenPanel, null>) {
 <template>
   <div class="teleoperation-page" :style="layoutStyle" @click="openPanel = null">
     <TeleoperationLayout>
+      <template #camera>
+        <CameraLayer :stream="cameraStream" :status="cameraStatus" :error="cameraError" />
+      </template>
+
       <template #header>
         <HeaderZone>
           <Button
@@ -88,7 +99,6 @@ function togglePanel(panel: Exclude<OpenPanel, null>) {
 
       <template #overlay>
         <CenterOverlayZone>
-          <TeleoperationCamera :status="connectionStatus" />
           <OverlayPanel
             v-if="openPanel === 'info'"
             title="Robot Info"

@@ -26,7 +26,9 @@ HUD 保持原有三行 Zone 几何：
 
 ## HUD 控件与 Mock 边界
 
-`VirtualJoystick` 输出归一化的左右摇杆读数；`TelemetryReadout` 显示 LX、LY、RX、RY，不发送运动命令。`StopControl` 保留连接状态禁用逻辑与 STOP 回调，通过 `MockTeleoperationService` 发送零速度命令。机器人相机和遥操服务均未连接真实设备。
+`VirtualJoystick` 保留原有底座、控制球、方向箭头和动画。`useJoystick` 管理单个摇杆的状态与生命周期，`services/joystick/nipple-adapter.ts` 以 `static`、`dataOnly` 模式使用 nipplejs 处理鼠标和触摸输入，不生成第三方 UI。左右摇杆共用 `JoystickState`（归一化的 x、y 和 active），页面统一存储两侧状态；`TelemetryReadout` 显示 LX、LY、RX、RY。`JoystickCommand` 定义了未来控制接口所需的 source、x、y 和 timestamp，当前不发送运动命令。
+
+`StopControl` 保留连接状态禁用逻辑与 STOP 回调，通过 `MockTeleoperationService` 发送零速度命令。机器人相机和遥操服务均未连接真实设备。
 
 ## 验证
 

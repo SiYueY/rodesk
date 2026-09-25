@@ -1,0 +1,424 @@
+.teleoperation-page {
+  --joy-size: 136px;
+  --side-margin: 24px;
+  --bottom-margin: 20px;
+  --tool-size: 46px;
+  --tool-gap: 12px;
+  --button-edge-margin: 14px;
+  --header-zone-height: clamp(56px, 8.7vh, 74px);
+  --button-zone-width: calc(
+    max(var(--tool-size), clamp(42px, 6vh, 52px)) + 2 * var(--button-edge-margin)
+  );
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
+  line-height: normal;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.teleoperation-layout {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: var(--header-zone-height) minmax(0, 1fr) calc(
+      var(--joy-size) + var(--bottom-margin)
+    );
+  pointer-events: none;
+}
+
+.teleoperation-layout__middle {
+  display: grid;
+  grid-template-columns: var(--button-zone-width) minmax(0, 1fr) var(--button-zone-width);
+  min-width: 0;
+  min-height: 0;
+}
+
+.teleoperation-layout__bottom {
+  display: grid;
+  grid-template-columns: calc(var(--side-margin) + var(--joy-size)) minmax(0, 1fr) calc(
+      var(--side-margin) + var(--joy-size)
+    );
+  align-items: start;
+  min-width: 0;
+  min-height: 0;
+}
+
+.teleop-header-zone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  min-width: 0;
+  padding-top: max(14px, env(safe-area-inset-top));
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.teleop-header-zone__info {
+  justify-self: start;
+  font-size: clamp(13px, 1.95vh, 18px);
+  line-height: 1.2;
+}
+.teleop-header-zone__info span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.82em;
+  opacity: 0.92;
+}
+.teleop-header-zone__mode {
+  justify-self: center;
+  font-size: clamp(16px, 2.2vh, 21px);
+  font-weight: 700;
+}
+.teleop-header-zone__status {
+  justify-self: end;
+  font-size: clamp(12px, 1.8vh, 16px);
+}
+
+.teleop-left-button-zone,
+.teleop-right-button-zone,
+.teleop-center-overlay-zone {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+.teleop-center-overlay-zone {
+  overflow: hidden;
+}
+
+.teleop-tools {
+  position: absolute;
+  bottom: calc(var(--tool-size) * 0.5);
+  display: flex;
+  width: var(--tool-size);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tool-gap);
+  pointer-events: auto;
+}
+.teleop-tools--left {
+  left: var(--button-edge-margin);
+}
+.teleop-tools--right {
+  right: var(--button-edge-margin);
+}
+
+.teleop-action {
+  width: var(--tool-size);
+  height: var(--tool-size);
+  padding: 0;
+  border: 1px solid rgba(220, 235, 255, 0.45);
+  border-radius: 50%;
+  background: rgba(80, 90, 120, 0.18);
+  color: #fff;
+  font-size: clamp(15px, 2.2vh, 19px);
+  box-shadow: 0 0 8px rgba(120, 170, 255, 0.18);
+}
+
+.teleop-stop {
+  position: absolute;
+  top: 0;
+  right: var(--button-edge-margin);
+  width: clamp(42px, 6vh, 52px);
+  height: clamp(42px, 6vh, 52px);
+  padding: 0;
+  border: 2px solid rgba(255, 130, 130, 0.82);
+  border-radius: 50%;
+  background: rgba(255, 70, 70, 0.11);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.25),
+    0 0 10px rgba(255, 100, 100, 0.15);
+  pointer-events: auto;
+}
+.teleop-stop:disabled {
+  cursor: not-allowed;
+}
+
+.teleop-camera {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  background-image: url('https://www.unitree.com/images/7b830fccde8d41ac8e3fcec334e84735_3840x1988.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.teleop-panel {
+  position: absolute;
+  top: 16px;
+  z-index: 20;
+  box-sizing: border-box;
+  width: min(320px, calc(100% - 48px));
+  max-height: calc(100% - 32px);
+  overflow: hidden;
+  padding: clamp(12px, 2vw, 20px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  background: rgba(15, 20, 35, 0.72);
+  color: white;
+  isolation: isolate;
+  clip-path: inset(0 round 20px);
+  pointer-events: auto;
+}
+.teleop-panel--left {
+  left: 16px;
+}
+.teleop-panel--right {
+  right: 16px;
+}
+.teleop-panel__title {
+  margin-bottom: clamp(8px, 1.5vw, 14px);
+  font-size: clamp(14px, 2vw, 18px);
+  font-weight: 600;
+}
+.teleop-panel__row {
+  display: flex;
+  justify-content: space-between;
+  padding: clamp(4px, 1vw, 6px) 0;
+  font-size: clamp(12px, 1.8vw, 16px);
+  opacity: 0.9;
+}
+.teleop-error {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  width: max-content;
+  max-width: 90%;
+  transform: translateX(-50%);
+  color: #fff;
+  pointer-events: auto;
+}
+
+.teleop-left-joystick-zone,
+.teleop-right-joystick-zone {
+  display: flex;
+  height: 100%;
+  align-items: flex-end;
+}
+.teleop-left-joystick-zone {
+  justify-content: flex-start;
+  padding-left: var(--side-margin);
+  padding-bottom: var(--bottom-margin);
+}
+.teleop-right-joystick-zone {
+  justify-content: flex-end;
+  padding-right: var(--side-margin);
+  padding-bottom: var(--bottom-margin);
+}
+.teleop-joystick {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--joy-size);
+  height: var(--joy-size);
+  touch-action: none;
+  pointer-events: auto;
+}
+.teleop-joystick__base {
+  position: absolute;
+  inset: 0;
+  border: 2.8px solid rgba(255, 255, 255, 0.34);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.11) 0%,
+    rgba(255, 255, 255, 0.045) 42%,
+    rgba(255, 255, 255, 0.012) 62%,
+    rgba(255, 255, 255, 0) 80%
+  );
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 0 0 2px rgba(0, 0, 0, 0.1),
+    0 4px 18px rgba(0, 0, 0, 0.24),
+    0 0 24px rgba(0, 0, 0, 0.12);
+}
+.teleop-joystick__game-accent {
+  position: absolute;
+  inset: -4px;
+  border: 2px solid rgba(115, 195, 255, 0.12);
+  border-radius: 50%;
+  box-shadow:
+    0 0 8px rgba(70, 160, 255, 0.1),
+    inset 0 0 8px rgba(110, 190, 255, 0.06);
+  pointer-events: none;
+}
+.teleop-joystick__ring-1,
+.teleop-joystick__ring-2 {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+}
+.teleop-joystick__ring-1 {
+  inset: 15%;
+}
+.teleop-joystick__ring-2 {
+  inset: 32%;
+}
+.teleop-joystick__cross-h,
+.teleop-joystick__cross-v {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+}
+.teleop-joystick__cross-h {
+  left: 16%;
+  right: 16%;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+.teleop-joystick__cross-v {
+  top: 16%;
+  bottom: 16%;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+.teleop-joystick__direction-arrow {
+  position: absolute;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid rgba(182, 235, 255, 0.98);
+  border-left: 8px solid transparent;
+  filter: drop-shadow(0 0 5px rgba(90, 190, 255, 0.4));
+  opacity: 0;
+  pointer-events: none;
+  will-change: left, top, transform, opacity;
+}
+.teleop-joystick__knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 32%;
+  height: 32%;
+  transform: translate(-50%, -50%);
+  border: 2.4px solid rgba(255, 255, 255, 0.54);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 32%,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(255, 255, 255, 0.12) 18%,
+    rgba(255, 255, 255, 0.08) 38%,
+    rgba(255, 255, 255, 0.05) 62%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  box-shadow:
+    inset 0 2px 12px rgba(255, 255, 255, 0.08),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.1),
+    0 3px 10px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(0, 0, 0, 0.1);
+  will-change: transform;
+}
+.teleop-joystick__knob::before {
+  content: '';
+  position: absolute;
+  inset: 18%;
+  border: 1.2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+}
+.teleop-joystick--active .teleop-joystick__base {
+  border-color: rgba(180, 230, 255, 0.52);
+  box-shadow:
+    inset 0 0 24px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 0 2px rgba(85, 180, 255, 0.14),
+    0 4px 18px rgba(0, 0, 0, 0.24),
+    0 0 16px rgba(95, 190, 255, 0.18);
+}
+.teleop-joystick--active .teleop-joystick__knob {
+  border-color: rgba(205, 240, 255, 0.84);
+  box-shadow:
+    inset 0 2px 12px rgba(255, 255, 255, 0.1),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(0, 0, 0, 0.24),
+    0 0 12px rgba(110, 200, 255, 0.16),
+    0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.teleop-bottom-telemetry-zone {
+  display: flex;
+  height: 100%;
+  align-self: end;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+.teleop-telemetry {
+  display: flex;
+  gap: clamp(14px, 2.2vw, 28px);
+  color: rgba(255, 255, 255, 0.98);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.teleop-metric {
+  min-width: 48px;
+  text-align: center;
+}
+.teleop-metric b {
+  display: block;
+  font-size: clamp(18px, 3vh, 26px);
+  font-style: italic;
+  line-height: 1;
+}
+.teleop-metric span {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+  opacity: 0.74;
+}
+
+@media (max-width: 900px) {
+  .teleop-panel {
+    width: min(280px, 80%);
+    padding: 16px;
+  }
+}
+@media (max-width: 700px) {
+  .teleop-panel {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 600px) {
+  .teleop-panel {
+    top: 16px;
+    left: 50%;
+    right: auto;
+    width: min(78vw, 260px);
+    padding: 12px;
+    border-radius: 16px;
+    transform: translateX(-50%);
+  }
+  .teleop-panel__title {
+    font-size: 15px;
+  }
+  .teleop-panel__row {
+    font-size: 13px;
+  }
+}

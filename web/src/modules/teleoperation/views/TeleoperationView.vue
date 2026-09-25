@@ -1,46 +1,127 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { ArrowLeft } from 'lucide-vue-next';
-import { useRouter } from 'vue-router';
-import { Button } from '@/components/ui';
-import TeleoperationCamera from '../components/TeleoperationCamera.vue';
-import VirtualJoystick from '../components/VirtualJoystick.vue';
-import StopControl from '../components/StopControl.vue';
+import { computed, ref } from 'vue';
+import TeleoperationLayout from '../components/layout/TeleoperationLayout.vue';
+import HeaderZone from '../components/zones/HeaderZone.vue';
+import LeftButtonZone from '../components/zones/LeftButtonZone.vue';
+import CenterOverlayZone from '../components/zones/CenterOverlayZone.vue';
+import RightButtonZone from '../components/zones/RightButtonZone.vue';
+import LeftJoystickZone from '../components/zones/LeftJoystickZone.vue';
+import BottomTelemetryZone from '../components/zones/BottomTelemetryZone.vue';
+import RightJoystickZone from '../components/zones/RightJoystickZone.vue';
+import OverlayPanel from '../components/controls/OverlayPanel.vue';
+import TelemetryReadout from '../components/controls/TelemetryReadout.vue';
+import VirtualJoystick from '../components/controls/VirtualJoystick.vue';
+import StopControl from '../components/controls/StopControl.vue';
+import TeleoperationCamera from '../components/camera/TeleoperationCamera.vue';
 import { useTeleoperationSession } from '../composables/useTeleoperationSession';
+import { useTeleoperationLayout } from '../composables/useTeleoperationLayout';
+import type { JoystickAxes } from '../types';
+import '../teleoperation.css';
 
-const router = useRouter();
+type OpenPanel = 'info' | 'status' | null;
 const { connectionStatus, error, stop } = useTeleoperationSession();
+const { layoutStyle } = useTeleoperationLayout();
 const stopDisabled = computed(() => connectionStatus.value !== 'connected');
+const leftAxes = ref<JoystickAxes>({ x: 0, y: 0 });
+const rightAxes = ref<JoystickAxes>({ x: 0, y: 0 });
+const openPanel = ref<OpenPanel>(null);
+
+const infoRows = [
+  { label: 'Model', value: 'Unitree' },
+  { label: 'ID', value: 'ROBOT-01' },
+  { label: 'Mode', value: 'Stand' },
+];
+const statusRows = [
+  { label: 'Battery', value: '82%' },
+  { label: 'Network', value: 'Online' },
+  { label: 'Temp', value: 'Normal' },
+];
+
+function togglePanel(panel: Exclude<OpenPanel, null>) {
+  openPanel.value = openPanel.value === panel ? null : panel;
+}
 </script>
 
 <template>
-  <main class="h-full overflow-y-auto bg-background text-foreground">
-    <div class="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-8 px-5 py-5 sm:px-8 sm:py-8">
-      <header class="flex items-center gap-4">
-        <Button variant="ghost" size="sm" title="返回 Agent" @click="router.push('/')">
-          <ArrowLeft :size="17" />
-          <span class="ml-2">返回 Agent</span>
-        </Button>
-        <div>
-          <p class="m-0 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Teleoperation
-          </p>
-          <h1 class="mt-1 text-2xl font-semibold tracking-tight">机器人遥操</h1>
-        </div>
-      </header>
+  <div class="teleoperation-page" :style="layoutStyle" @click="openPanel = null">
+    <TeleoperationLayout>
+      <template #header>
+        <HeaderZone>
+          <div class="teleop-header-zone__info">ROBOT-01<span>Stand Mode</span></div>
+          <div class="teleop-header-zone__mode">常规模式</div>
+          <div class="teleop-header-zone__status">5G&nbsp;&nbsp;WiFi&nbsp;&nbsp;82%</div>
+        </HeaderZone>
+      </template>
 
-      <TeleoperationCamera :status="connectionStatus" />
+      <template #left-buttons>
+        <LeftButtonZone>
+          <div class="teleop-tools teleop-tools--left">
+            <button
+              class="teleop-action"
+              type="button"
+              aria-label="机器人信息"
+              @click.stop="togglePanel('info')"
+            >
+              人
+            </button>
+            <button class="teleop-action" type="button" aria-label="其他操作">▦</button>
+          </div>
+        </LeftButtonZone>
+      </template>
 
-      <p v-if="error" class="m-0 text-sm text-destructive" role="alert">{{ error }}</p>
+      <template #overlay>
+        <CenterOverlayZone>
+          <TeleoperationCamera :status="connectionStatus" />
+          <OverlayPanel
+            v-if="openPanel === 'info'"
+            title="Robot Info"
+            side="left"
+            :rows="infoRows"
+          />
+          <OverlayPanel
+            v-if="openPanel === 'status'"
+            title="Robot Status"
+            side="right"
+            :rows="statusRows"
+          />
+          <p v-if="error" class="teleop-error" role="alert">{{ error }}</p>
+        </CenterOverlayZone>
+      </template>
 
-      <section class="grid grid-cols-2 gap-6 sm:gap-12" aria-label="虚拟控制杆">
-        <VirtualJoystick label="Left Stick" />
-        <VirtualJoystick label="Right Stick" />
-      </section>
+      <template #right-buttons>
+        <RightButtonZone>
+          <StopControl :disabled="stopDisabled" @stop="stop" />
+          <div class="teleop-tools teleop-tools--right">
+            <button
+              class="teleop-action"
+              type="button"
+              aria-label="机器人状态"
+              @click.stop="togglePanel('status')"
+            >
+              ⌖
+            </button>
+            <button class="teleop-action" type="button" aria-label="其他操作">⌘</button>
+          </div>
+        </RightButtonZone>
+      </template>
 
-      <div class="flex justify-center pb-4">
-        <StopControl :disabled="stopDisabled" @stop="stop" />
-      </div>
-    </div>
-  </main>
+      <template #left-joystick>
+        <LeftJoystickZone>
+          <VirtualJoystick label="Left Stick" @change="leftAxes = $event" />
+        </LeftJoystickZone>
+      </template>
+
+      <template #telemetry>
+        <BottomTelemetryZone>
+          <TelemetryReadout :left="leftAxes" :right="rightAxes" />
+        </BottomTelemetryZone>
+      </template>
+
+      <template #right-joystick>
+        <RightJoystickZone>
+          <VirtualJoystick label="Right Stick" @change="rightAxes = $event" />
+        </RightJoystickZone>
+      </template>
+    </TeleoperationLayout>
+  </div>
 </template>

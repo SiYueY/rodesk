@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import WorkspaceView from '@/modules/workspace/WorkspaceView.vue'
 
 const router = createRouter({
@@ -7,8 +8,14 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'workspace',
-      component: WorkspaceView,
+      component: DefaultLayout,
+      children: [
+        {
+          path: '',
+          name: 'workspace',
+          component: WorkspaceView,
+        },
+      ],
     },
   ],
 })

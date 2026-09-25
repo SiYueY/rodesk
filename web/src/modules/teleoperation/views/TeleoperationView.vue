@@ -16,17 +16,17 @@ const stopDisabled = computed(() => connectionStatus.value !== 'connected');
 <template>
   <main class="h-full overflow-y-auto bg-background text-foreground">
     <div class="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-8 px-5 py-5 sm:px-8 sm:py-8">
-      <header class="flex items-center justify-between gap-4">
+      <header class="flex items-center gap-4">
+        <Button variant="ghost" size="sm" title="返回 Agent" @click="router.push('/')">
+          <ArrowLeft :size="17" />
+          <span class="ml-2">返回 Agent</span>
+        </Button>
         <div>
           <p class="m-0 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
             Teleoperation
           </p>
           <h1 class="mt-1 text-2xl font-semibold tracking-tight">机器人遥操</h1>
         </div>
-        <Button variant="ghost" size="sm" title="返回 Agent" @click="router.push('/')">
-          <ArrowLeft :size="17" />
-          <span class="ml-2">返回 Agent</span>
-        </Button>
       </header>
 
       <TeleoperationCamera :status="connectionStatus" />

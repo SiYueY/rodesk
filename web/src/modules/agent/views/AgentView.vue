@@ -19,6 +19,8 @@ const {
   frame,
   gridStyle,
   narrow,
+  openRightbar,
+  openSidebar,
   onDragEnd,
   onDragMove,
   onDragStart,
@@ -30,6 +32,9 @@ const {
 } = useAgentLayout();
 
 const emptyConversation = computed(() => !store.activeSession?.messages.length);
+const teleoperationEntryStyle = computed(() => ({
+  right: `${columns.value.right + (rightbarExpanded.value ? 16 : 60)}px`,
+}));
 
 function bindFrame(element: unknown) {
   frame.value = element instanceof HTMLElement ? element : undefined;
@@ -53,6 +58,7 @@ function selectSession(id: string) {
       css.appFrame,
       {
         [css.sidebarOpen]: sidebarExpanded,
+        [css.rightbarOpen]: rightbarExpanded,
         [css.dragging]: drag,
       },
     ]"
@@ -80,34 +86,34 @@ function selectSession(id: string) {
 
     <RightRobotPanel v-if="rightbarVisible" :class="css.rightColumn" @toggle="toggleRightbar" />
 
-    <div :class="css.topActions">
-      <Button
-        variant="ghost"
-        size="icon"
-        title="Teleoperation"
-        aria-label="打开 Teleoperation"
-        @click="router.push('/teleoperation')"
-      >
-        <Gamepad2 :size="20" />
-      </Button>
+    <Button
+      :class="css.teleoperationEntry"
+      :style="teleoperationEntryStyle"
+      variant="ghost"
+      size="icon"
+      title="Teleoperation"
+      aria-label="打开 Teleoperation"
+      @click="router.push('/teleoperation')"
+    >
+      <Gamepad2 :size="20" />
+    </Button>
 
-      <button
-        v-if="!narrow && !rightbarExpanded"
-        :class="css.openRightbar"
-        type="button"
-        aria-label="展开 Robot 侧栏"
-        @click="rightbarExpanded = true"
-      >
-        <PanelRight :size="20" />
-      </button>
-    </div>
+    <button
+      v-if="!rightbarExpanded"
+      :class="css.openRightbar"
+      type="button"
+      aria-label="展开 Robot 侧栏"
+      @click="openRightbar"
+    >
+      <PanelRight :size="20" />
+    </button>
 
     <button
       v-if="!sidebarExpanded"
       :class="css.openSidebar"
       type="button"
       aria-label="展开会话列表"
-      @click="sidebarExpanded = true"
+      @click="openSidebar"
     >
       <img src="/assets/deepseek-harness-fish.svg" alt="" />
     </button>
@@ -142,6 +148,14 @@ function selectSession(id: string) {
       type="button"
       aria-label="关闭会话列表"
       @click="sidebarExpanded = false"
+    />
+
+    <button
+      v-if="narrow && rightbarExpanded"
+      :class="css.rightbarScrim"
+      type="button"
+      aria-label="关闭 Robot 侧栏"
+      @click="rightbarExpanded = false"
     />
   </div>
 </template>

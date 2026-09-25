@@ -20,14 +20,10 @@
 .rightColumn {
   grid-column: 3;
 }
-.topActions {
+.teleoperationEntry {
   position: absolute;
   z-index: 5;
   top: 16px;
-  right: 16px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 .openSidebar,
 .openRightbar {
@@ -50,7 +46,7 @@
   left: 16px;
 }
 .openRightbar {
-  position: static;
+  right: 16px;
 }
 .openSidebar:hover,
 .openRightbar:hover {
@@ -78,7 +74,8 @@
   outline: 2px solid var(--dsw-static-deepseek-500);
   outline-offset: -2px;
 }
-.sidebarScrim {
+.sidebarScrim,
+.rightbarScrim {
   display: none;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -100,7 +97,15 @@
     width: 280px;
     box-shadow: 0 8px 32px rgb(0 0 0 / 14%);
   }
-  .sidebarScrim {
+  .appFrame.rightbarOpen .rightColumn {
+    position: absolute;
+    z-index: 20;
+    inset: 0 0 0 auto;
+    width: 280px;
+    box-shadow: 0 8px 32px rgb(0 0 0 / 14%);
+  }
+  .sidebarScrim,
+  .rightbarScrim {
     display: block;
     position: absolute;
     z-index: 10;

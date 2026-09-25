@@ -80,7 +80,9 @@ export function useAgentLayout() {
       rightbarWidth: rightbarWidth.value,
     }),
   );
-  const rightbarVisible = computed(() => columns.value.right > 0);
+  const rightbarVisible = computed(() =>
+    narrow.value ? rightbarExpanded.value : columns.value.right > 0,
+  );
   const gridStyle = computed<CSSProperties>(() => ({
     gridTemplateColumns: columns.value.left + 'px minmax(0, 1fr) ' + columns.value.right + 'px',
   }));
@@ -94,10 +96,22 @@ export function useAgentLayout() {
 
   function toggleSidebar() {
     sidebarExpanded.value = !sidebarExpanded.value;
+    if (narrow.value && sidebarExpanded.value) rightbarExpanded.value = false;
   }
 
   function toggleRightbar() {
     rightbarExpanded.value = !rightbarExpanded.value;
+    if (narrow.value && rightbarExpanded.value) sidebarExpanded.value = false;
+  }
+
+  function openSidebar() {
+    sidebarExpanded.value = true;
+    if (narrow.value) rightbarExpanded.value = false;
+  }
+
+  function openRightbar() {
+    rightbarExpanded.value = true;
+    if (narrow.value) sidebarExpanded.value = false;
   }
 
   function closeSidebarAfterNavigation() {
@@ -179,6 +193,8 @@ export function useAgentLayout() {
     rightbarExpanded,
     rightbarVisible,
     sidebarExpanded,
+    openRightbar,
+    openSidebar,
     toggleRightbar,
     toggleSidebar,
     closeSidebarAfterNavigation,

@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>rodesk Teleop V20 Zone Debug Panel Tighten</title>
+
+<!--
+================================================================================
+rodesk Teleoperation Layout V23.3 - Annotated Baseline
+
+Purpose:
+This file is the visual reference implementation for migrating the teleoperation
+page to Vue3.
+
+Layout ownership:
+
+1. Header Zone
+   - Robot identity
+   - Operating mode
+   - Network state
+   - Does not contain popup panels.
+
+2. Middle Zone:
+   Left Button Zone | Center Overlay Zone | Right Button Zone
+
+   Rules:
+   - Three zones are mutually exclusive.
+   - Button zone width follows button group size.
+   - Center Overlay owns all popup panels.
+
+3. Bottom Zone:
+   Left Joystick Zone | Bottom Center Telemetry | Right Joystick Zone
+
+   Rules:
+   - Joystick size and position are preserved from V16.
+   - Telemetry only displays control values.
+   - Telemetry height remains lower than joystick height.
+
+Vue3 migration target:
+TeleoperationPage
+ ├── HeaderZone
+ ├── LeftButtonZone
+ ├── CenterOverlayZone
+ │    └── OverlayPanel
+ ├── RightButtonZone
+ ├── LeftJoystickZone
+ ├── BottomTelemetry
+ └── RightJoystickZone
+
+Important:
+Child components must not modify parent zone geometry.
+================================================================================
+-->
+
+<style>
+:root{
+  --v6-side-margin:24px;
+  --v6-button-joystick-gap:32px;
+
+  --v4-button-zone:78px;
+  --v4-bottom-gap:12px;
+  --v4-telemetry-height:56px;
+  --v4-panel-gap:16px;
+
+  --joy-size:136px;
+  --side-margin:24px;
+  --bottom-margin:20px;
+  --tool-size:46px;
+  --tool-gap:12px;
+  --tool-bottom:170px;
+  --button-edge-margin:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{
+  margin:0;width:100%;height:100%;overflow:hidden;background:#000;
+  font-family:system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+body{color:#fff;user-select:none}
+.video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  background-image:url("https://www.unitree.com/images/7b830fccde8d41ac8e3fcec334e84735_3840x1988.jpg");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+}
+.overlay{position:absolute;inset:0}
+
+/* V4 Layout */
+.bottom-layout{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:max(10px,env(safe-area-inset-bottom));
+  height:calc(var(--joy-size) + 20px);
+  display:grid;
+  grid-template-columns: auto minmax(120px,1fr) auto;
+  align-items:end;
+  pointer-events:none;
+}
+
+.telemetry-v4{
+  height:var(--v4-telemetry-height);
+  align-self:end;
+  justify-self:center;
+  display:flex;
+  align-items:center;
+}
+
+/* top HUD */
+.mode{
+  position:absolute;top:max(14px,env(safe-area-inset-top));left:50%;
+  transform:translateX(-50%);
+  font-size:clamp(16px,2.2vh,21px);
+  font-weight:700;
+  text-shadow:0 1px 3px rgba(0,0,0,.55)
+}
+.status{
+  position:absolute;top:max(14px,env(safe-area-inset-top));
+  right:max(14px,env(safe-area-inset-right));
+  font-size:clamp(12px,1.8vh,16px);
+  text-shadow:0 1px 3px rgba(0,0,0,.55)
+}
+.info{
+  position:absolute;top:max(14px,env(safe-area-inset-top));
+  left:max(14px,env(safe-area-inset-left));
+  font-size:clamp(13px,1.95vh,18px);
+  line-height:1.2;
+  text-shadow:0 1px 3px rgba(0,0,0,.55)
+}
+.info .sub{display:block;margin-top:4px;font-size:.82em;opacity:.92}
+
+.stop{
+  position:absolute;
+  top:clamp(56px,8.7vh,74px);
+  right:max(14px,env(safe-area-inset-right));
+  width:clamp(42px,6vh,52px);
+  height:clamp(42px,6vh,52px);
+  border-radius:50%;
+  border:2px solid rgba(255,130,130,.82);
+  background:rgba(255,70,70,.11);
+  color:#fff;font-size:10px;font-weight:800;
+  box-shadow:
+    0 2px 10px rgba(0,0,0,.25),
+    0 0 10px rgba(255,100,100,.15);
+}
+
+/* joystick */
+.joystick{
+  position:absolute;
+  width:var(--joy-size);height:var(--joy-size);
+  bottom:var(--bottom-margin);
+  touch-action:none;
+}
+.joystick.left{left:var(--side-margin)}
+.joystick.right{right:var(--side-margin)}
+
+.base{
+  position:absolute;inset:0;border-radius:50%;
+  background:
+    radial-gradient(circle at center,
+      rgba(255,255,255,.11) 0%,
+      rgba(255,255,255,.045) 42%,
+      rgba(255,255,255,.012) 62%,
+      rgba(255,255,255,0) 80%);
+  border:2.8px solid rgba(255,255,255,.34);
+  box-shadow:
+    inset 0 0 24px rgba(0,0,0,.18),
+    inset 0 0 0 1px rgba(255,255,255,.06),
+    0 0 0 2px rgba(0,0,0,.10),
+    0 4px 18px rgba(0,0,0,.24),
+    0 0 24px rgba(0,0,0,.12);
+}
+.game-accent{
+  position:absolute;inset:-4px;border-radius:50%;
+  border:2px solid rgba(115,195,255,.12);
+  box-shadow:
+    0 0 8px rgba(70,160,255,.10),
+    inset 0 0 8px rgba(110,190,255,.06);
+  pointer-events:none;
+}
+.arc{
+  position:absolute;border-radius:50%;pointer-events:none;
+  border:3px solid transparent;
+  filter:drop-shadow(0 0 5px rgba(110,190,255,.18));
+}
+.arc.a1{
+  inset:3%;
+  border-top-color:rgba(120,210,255,.45);
+  border-left-color:rgba(120,210,255,.18);
+  transform:rotate(-18deg);
+}
+.arc.a2{
+  inset:8%;
+  border-right-color:rgba(255,255,255,.20);
+  border-bottom-color:rgba(255,255,255,.08);
+  transform:rotate(28deg);
+}
+.ring-1,.ring-2{
+  position:absolute;border-radius:50%;
+  border:1px solid rgba(255,255,255,.16);
+}
+.ring-1{inset:15%}
+.ring-2{inset:32%}
+.cross-h,.cross-v{
+  position:absolute;background:rgba(255,255,255,.10)
+}
+.cross-h{left:16%;right:16%;top:50%;height:1px;transform:translateY(-50%)}
+.cross-v{top:16%;bottom:16%;left:50%;width:1px;transform:translateX(-50%)}
+
+.direction-arrow{
+  position:absolute;
+  left:50%;top:50%;
+  width:0;height:0;
+  transform:translate(-50%,-50%) rotate(0deg);
+  border-left:8px solid transparent;
+  border-right:8px solid transparent;
+  border-bottom:14px solid rgba(182,235,255,.98);
+  filter:drop-shadow(0 0 5px rgba(90,190,255,.40));
+  opacity:0;
+  pointer-events:none;
+  will-change:left,top,transform,opacity;
+  z-index:5;
+}
+.joystick.active .direction-arrow{opacity:1}
+.active .base{
+  border-color:rgba(180,230,255,.52);
+  box-shadow:
+    inset 0 0 24px rgba(0,0,0,.18),
+    inset 0 0 0 1px rgba(255,255,255,.08),
+    0 0 0 2px rgba(85,180,255,.14),
+    0 4px 18px rgba(0,0,0,.24),
+    0 0 16px rgba(95,190,255,.18);
+}
+
+.knob{
+  position:absolute;left:50%;top:50%;
+  width:32%;height:32%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 35% 32%,
+      rgba(255,255,255,.32) 0%,
+      rgba(255,255,255,.12) 18%,
+      rgba(255,255,255,.08) 38%,
+      rgba(255,255,255,.05) 62%,
+      rgba(255,255,255,.03) 100%);
+  border:2.4px solid rgba(255,255,255,.54);
+  box-shadow:
+    inset 0 2px 12px rgba(255,255,255,.08),
+    inset 0 -8px 18px rgba(0,0,0,.10),
+    0 3px 10px rgba(0,0,0,.22),
+    0 0 0 1px rgba(0,0,0,.10);
+  will-change:transform;
+}
+.knob::before{
+  content:"";
+  position:absolute;inset:18%;
+  border-radius:50%;
+  border:1.2px solid rgba(255,255,255,.22);
+}
+.active .knob{
+  border-color:rgba(205,240,255,.84);
+  box-shadow:
+    inset 0 2px 12px rgba(255,255,255,.10),
+    inset 0 -8px 18px rgba(0,0,0,.12),
+    0 4px 12px rgba(0,0,0,.24),
+    0 0 12px rgba(110,200,255,.16),
+    0 0 0 1px rgba(0,0,0,.10);
+}
+
+/* V8 Button Zone:
+   - symmetric left/right layout
+   - fixed distance above joystick zone
+   - button group centered in its zone
+*/
+.left-tools,.right-tools{
+  position:absolute;
+  bottom:calc(
+    var(--bottom-margin)
+    + var(--joy-size)
+    + var(--v6-button-joystick-gap)
+  );
+  width:var(--tool-size);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:var(--tool-gap);
+}
+
+.left-tools{
+  left:var(--button-edge-margin);
+}
+
+.right-tools{
+  right:var(--button-edge-margin);
+}
+
+.action{
+  width:var(--tool-size);height:var(--tool-size);
+  border-radius:50%;
+  border:1px solid rgba(220,235,255,.45);
+  background:rgba(80,90,120,.18);
+  color:#fff;font-size:clamp(15px,2.2vh,19px);
+  box-shadow:0 0 8px rgba(120,170,255,.18);
+}
+.action.green{
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,.16), rgba(255,255,255,.05) 50%, rgba(255,255,255,.00) 72%),
+    rgba(60,190,110,.14);
+  border-color:rgba(150,245,185,.40);
+}
+.action.cyan{
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,.16), rgba(255,255,255,.05) 50%, rgba(255,255,255,.00) 72%),
+    rgba(60,170,255,.14);
+  border-color:rgba(150,225,255,.40);
+}
+
+.telemetry{
+  position:absolute;left:50%;bottom:max(10px,env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  display:flex;gap:clamp(14px,2.2vw,28px);
+  color:rgba(255,255,255,.98);
+  text-shadow:0 1px 3px rgba(0,0,0,.50);
+}
+.metric{text-align:center;min-width:48px}
+.metric b{display:block;font-size:clamp(18px,3vh,26px);font-style:italic;line-height:1}
+.metric span{display:block;margin-top:3px;font-size:9px;opacity:.74}
+
+@media (max-height:460px){
+  .stop{top:48px}
+}
+
+/* ================= V5 HUD Layout System =================
+   Existing joystick/button rendering is intentionally untouched.
+   This layer only defines ownership and relative layout.
+*/
+.hud-v5-layout{
+  position:absolute;
+  inset:0;
+  display:grid;
+  grid-template-rows:
+    auto
+    1fr
+    minmax(0, calc(var(--joy-size) + 20px));
+  pointer-events:none;
+}
+
+.main-zone-v5{
+  display:grid;
+  grid-template-columns:
+    minmax(var(--button-zone-width), auto)
+    1fr
+    minmax(var(--button-zone-width), auto);
+}
+
+.left-zone-v5,
+.right-zone-v5{
+  width:var(--button-zone-width);
+}
+
+.left-zone-v5{
+  padding-left:var(--v6-side-margin);
+}
+
+.right-zone-v5{
+  padding-right:var(--v6-side-margin);
+}
+
+.center-overlay-zone-v5{
+  position:relative;
+}
+
+.bottom-zone-v5{
+  display:grid;
+  grid-template-columns:
+    minmax(0, var(--joy-size))
+    1fr
+    minmax(0, var(--joy-size));
+  align-items:end;
+  padding-left:var(--v6-side-margin);
+  padding-right:var(--v6-side-margin);
+}
+
+.bottom-telemetry-zone-v5{
+  height:min(56px, calc(var(--joy-size) * .35));
+  align-self:end;
+}
+
+.left-joystick-zone-v5,
+.right-joystick-zone-v5{
+  width:var(--joy-size);
+  height:var(--joy-size);
+}
+/* ======================================================== */
+
+/* ================= V10 TRUE ZONE MIGRATION =================
+   The existing component rendering is preserved.
+   Only layout ownership changes:
+   Header / Left Button / Center Overlay / Right Button /
+   Left Joystick / Bottom Telemetry / Right Joystick.
+*/
+
+:root{
+  /* Header bottom matches the original STOP top position. */
+  --header-zone-height:clamp(56px,8.7vh,74px);
+
+  /* Button Zone width follows the actual controls and stays
+     narrower than the joystick zones. */
+  --button-zone-width-v10:
+    calc(max(var(--tool-size), clamp(42px,6vh,52px))
+         + (2 * var(--button-edge-margin)));
+}
+
+.hud-layout{
+  position:absolute;
+  inset:0;
+  z-index:1;
+
+  display:grid;
+  grid-template-rows:
+    var(--header-zone-height)
+    minmax(0,1fr)
+    calc(var(--joy-size) + var(--bottom-margin));
+
+  pointer-events:none;
+}
+
+/* ---------- Header Zone ---------- */
+
+.header-zone{
+  min-width:0;
+
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:start;
+
+  padding-top:max(14px,env(safe-area-inset-top));
+  padding-left:max(14px,env(safe-area-inset-left));
+  padding-right:max(14px,env(safe-area-inset-right));
+}
+
+.header-zone .info,
+.header-zone .mode,
+.header-zone .status{
+  position:static;
+  top:auto;
+  right:auto;
+  left:auto;
+  transform:none;
+}
+
+.header-zone .info{
+  justify-self:start;
+}
+
+.header-zone .mode{
+  justify-self:center;
+}
+
+.header-zone .status{
+  justify-self:end;
+}
+
+/* ---------- Middle Zone ---------- */
+
+.middle-zone{
+  min-width:0;
+  min-height:0;
+
+  display:grid;
+  grid-template-columns:
+    var(--button-zone-width-v10)
+    minmax(0,1fr)
+    var(--button-zone-width-v10);
+}
+
+.left-button-zone,
+.right-button-zone,
+.center-overlay-zone{
+  position:relative;
+  min-width:0;
+  min-height:0;
+}
+
+/*
+  Button Zones are mutually exclusive with Center Overlay.
+  Their width follows button size, not joystick size.
+*/
+.left-tools,
+.right-tools{
+  position:absolute;
+
+  /* Exactly half a button above the joystick-zone boundary. */
+  bottom:calc(var(--tool-size) * .5);
+
+  width:var(--tool-size);
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:var(--tool-gap);
+
+  pointer-events:auto;
+}
+
+.left-tools{
+  left:var(--button-edge-margin);
+}
+
+.right-tools{
+  right:var(--button-edge-margin);
+}
+
+/* STOP is part of the Right Button Zone. */
+.right-button-zone .stop{
+  position:absolute;
+  top:0;
+  right:var(--button-edge-margin);
+  pointer-events:auto;
+}
+
+/* Popup panels must be children of this zone in later versions. */
+.center-overlay-zone{
+  overflow:hidden;
+}
+
+/* ---------- Bottom Zone ---------- */
+
+.bottom-zone{
+  min-width:0;
+  min-height:0;
+
+  height:100%;
+
+  display:grid;
+
+  /*
+    Joystick-zone widths follow joystick geometry + the existing
+    page edge margin.  The center telemetry takes the remainder.
+  */
+  grid-template-columns:
+    calc(var(--side-margin) + var(--joy-size))
+    minmax(0,1fr)
+    calc(var(--side-margin) + var(--joy-size));
+
+  align-items:start;
+}
+
+.left-joystick-zone,
+.right-joystick-zone{
+  height:100%;
+
+  display:flex;
+  align-items:flex-start;
+}
+
+.left-joystick-zone{
+  justify-content:flex-start;
+  align-items:flex-end;
+  padding-left:var(--side-margin);
+  padding-bottom:var(--bottom-margin);
+}
+
+.right-joystick-zone{
+  justify-content:flex-end;
+  align-items:flex-end;
+  padding-right:var(--side-margin);
+  padding-bottom:var(--bottom-margin);
+}
+
+/* Joystick rendering/interaction stays unchanged; only ownership changes. */
+.joystick{
+  position:relative;
+  bottom:auto;
+  flex:0 0 auto;
+  pointer-events:auto;
+}
+
+.joystick.left{
+  left:auto;
+}
+
+.joystick.right{
+  right:auto;
+}
+
+/*
+  Telemetry is an intrinsic-height item, intentionally lower than
+  the joystick zones.
+*/
+.bottom-center-telemetry{
+  height:100%;
+  align-self:end;
+
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+
+  padding-bottom:max(10px,env(safe-area-inset-bottom));
+}
+
+.telemetry{
+  position:static;
+  left:auto;
+  bottom:auto;
+  transform:none;
+
+  pointer-events:none;
+}
+
+/* The old skeleton is no longer used. */
+.hud-v5-layout,
+.bottom-layout,
+.telemetry-v4{
+  display:none !important;
+}
+
+/* ========================================================== */
+
+
+/* ================= V11 Center Overlay Panels ================= */
+
+.center-overlay-zone{
+  overflow:hidden;
+}
+
+.center-overlay-panel{
+  position:absolute;
+  top:16px;
+
+  width:min(320px, calc(100% - 32px));
+  padding:16px;
+
+  border-radius:20px;
+
+  background:rgba(15,20,35,.72);
+  border:1px solid rgba(255,255,255,.25);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  isolation:isolate;
+
+  color:white;
+
+  box-shadow:none;
+
+  pointer-events:auto;
+
+  z-index:20;
+}
+
+.center-overlay-panel.left{
+  left:16px;
+}
+
+.center-overlay-panel.right{
+  right:16px;
+}
+
+.panel-title{
+  font-size:18px;
+  font-weight:600;
+  margin-bottom:14px;
+}
+
+.panel-row{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  opacity:.9;
+}
+
+
+@media(max-width:700px){
+
+  .center-overlay-panel{
+    width:85%;
+    left:50% !important;
+    right:auto !important;
+    transform:translateX(-50%);
+  }
+
+}
+
+/* ========================================================== */
+
+
+/* ================= V12 Responsive Center Overlay Panel ================= */
+
+.center-overlay-panel{
+  width:min(320px, calc(100% - 48px));
+  max-height:calc(100% - 32px);
+
+  padding:clamp(12px,2vw,20px);
+
+  overflow:auto;
+}
+
+.panel-title{
+  font-size:clamp(14px,2vw,18px);
+  margin-bottom:clamp(8px,1.5vw,14px);
+}
+
+.panel-row{
+  font-size:clamp(12px,1.8vw,16px);
+  padding:clamp(4px,1vw,6px) 0;
+}
+
+
+/*
+ Desktop:
+ Center Overlay keeps left/right placement.
+ Mobile:
+ Center Overlay becomes a narrow presentation area,
+ panels become centered and compact.
+*/
+
+@media(max-width:900px){
+
+  .center-overlay-panel{
+    width:min(280px,80%);
+    padding:16px;
+  }
+
+}
+
+
+@media(max-width:600px){
+
+  .center-overlay-zone{
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+  }
+
+
+  .center-overlay-panel,
+  .center-overlay-panel.left,
+  .center-overlay-panel.right{
+
+    position:absolute;
+
+    top:16px;
+
+    left:50%;
+    right:auto;
+
+    transform:translateX(-50%);
+
+    width:min(78vw,260px);
+
+    padding:12px;
+
+    border-radius:16px;
+
+  }
+
+
+  .panel-title{
+    font-size:15px;
+  }
+
+
+  .panel-row{
+    font-size:13px;
+  }
+
+}
+
+
+/* ========================================================== */
+
+
+
+/* Debug zone styles removed in final baseline. */
+
+
+
+/* Final baseline panel refinements retained above. */
+
+
+
+/* ================= V23.3 Panel CSS Cleanup Fix ================= */
+/* Remove legacy pseudo elements and force stable panel box rendering. */
+.center-overlay-panel::before,
+.center-overlay-panel::after {
+  display:none !important;
+  content:none !important;
+}
+
+.center-overlay-panel {
+  box-sizing:border-box;
+  overflow:hidden;
+  clip-path: inset(0 round 20px);
+}
+/* =============================================================== */
+</style>
+</head>
+<body>
+  <div id="video" class="video"></div>
+
+  <div class="hud-layout">
+
+    <header class="header-zone">
+      <div class="info">ROBOT-01<span class="sub">Stand Mode</span></div>
+      <div class="mode">常规模式</div>
+      <div class="status">5G&nbsp;&nbsp;WiFi&nbsp;&nbsp;82%</div>
+    </header>
+
+    <main class="middle-zone">
+
+      <aside class="left-button-zone">
+        <div class="left-tools">
+    <button class="action">人</button>
+    <button class="action">▦</button>
+  </div>
+      </aside>
+
+      <section class="center-overlay-zone" id="center-overlay-zone">
+
+        <div class="center-overlay-panel left" id="robot-info-panel" hidden>
+          <div class="panel-title">Robot Info</div>
+          <div class="panel-row"><span>Model</span><span>Unitree</span></div>
+          <div class="panel-row"><span>ID</span><span>ROBOT-01</span></div>
+          <div class="panel-row"><span>Mode</span><span>Stand</span></div>
+        </div>
+
+        <div class="center-overlay-panel right" id="robot-status-panel" hidden>
+          <div class="panel-title">Robot Status</div>
+          <div class="panel-row"><span>Battery</span><span>82%</span></div>
+          <div class="panel-row"><span>Network</span><span>Online</span></div>
+          <div class="panel-row"><span>Temp</span><span>Normal</span></div>
+        </div>
+        <!-- Popup panels must be mounted here. -->
+      </section>
+
+      <aside class="right-button-zone">
+        <button class="stop">STOP</button>
+        <div class="right-tools">
+    <button class="action">⌖</button>
+    <button class="action">⌘</button>
+  </div>
+      </aside>
+
+    </main>
+
+    <footer class="bottom-zone">
+
+      <section class="left-joystick-zone">
+        <div class="joystick left" data-axis="left">
+    <div class="game-accent"></div>
+    <div class="base"></div>
+    <div class="ring-1"></div><div class="ring-2"></div>
+    <div class="cross-h"></div><div class="cross-v"></div>
+    <div class="direction-arrow"></div>
+    <div class="knob"></div>
+  </div>
+      </section>
+
+      <section class="bottom-center-telemetry">
+        <div class="telemetry">
+    <div class="metric"><b id="lx">0.00</b><span>LX</span></div>
+    <div class="metric"><b id="ly">0.00</b><span>LY</span></div>
+    <div class="metric"><b id="rx">0.00</b><span>RX</span></div>
+    <div class="metric"><b id="ry">0.00</b><span>RY</span></div>
+  </div>
+      </section>
+
+      <section class="right-joystick-zone">
+        <div class="joystick right" data-axis="right">
+    <div class="game-accent"></div>
+    <div class="base"></div>
+    <div class="ring-1"></div><div class="ring-2"></div>
+    <div class="cross-h"></div><div class="cross-v"></div>
+    <div class="direction-arrow"></div>
+    <div class="knob"></div>
+  </div>
+      </section>
+
+    </footer>
+
+  </div>
+
+<script>
+const state={left:[0,0],right:[0,0]};
+
+function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+
+/*
+V16 rules:
+- larger joystick
+- side buttons vertical and never below joystick top edge
+- more game-like joystick rendering
+*/
+function updateLayout(){
+  const W=window.innerWidth;
+  const H=window.innerHeight;
+
+  const D=clamp(Math.min(H*0.35, W*0.195), 118, 180);
+  const Mx=clamp(W*0.032, 12, 38);
+  const My=clamp(H*0.050, 12, 34);
+  const B=clamp(H*0.078, 42, 54);
+  const G=clamp(H*0.024, 10, 16);
+  const stackBottom = My + D + 12; // always above joystick outer top edge
+
+  const root=document.documentElement.style;
+  root.setProperty("--joy-size", `${D}px`);
+  root.setProperty("--side-margin", `${Mx}px`);
+  root.setProperty("--bottom-margin", `${My}px`);
+  root.setProperty("--tool-size", `${B}px`);
+  root.setProperty("--tool-gap", `${G}px`);
+  root.setProperty("--tool-bottom", `${stackBottom}px`);
+}
+window.addEventListener("resize", updateLayout);
+updateLayout();
+
+function deadzoneMap(v,dz=.04){
+  const s=Math.sign(v), a=Math.abs(v);
+  if(a<=dz) return 0;
+  return s*((a-dz)/(1-dz));
+}
+function updateReadout(){
+  lx.textContent=state.left[0].toFixed(2);
+  ly.textContent=state.left[1].toFixed(2);
+  rx.textContent=state.right[0].toFixed(2);
+  ry.textContent=state.right[1].toFixed(2);
+}
+
+function setupJoystick(el){
+  const knob=el.querySelector(".knob");
+  const arrow=el.querySelector(".direction-arrow");
+  let pid=null;
+
+  function setAxis(x,y){
+    state[el.dataset.axis]=[x,y];
+    updateReadout();
+  }
+
+  function reset(){
+    pid=null;
+    el.classList.remove("active");
+    knob.style.transform="translate(-50%,-50%)";
+    arrow.style.opacity="0";
+    setAxis(0,0);
+  }
+
+  function move(e){
+    const r=el.getBoundingClientRect();
+    const cx=r.left+r.width/2;
+    const cy=r.top+r.height/2;
+
+    let dx=e.clientX-cx;
+    let dy=e.clientY-cy;
+
+    const knobRadius=r.width*.16;
+    const max=Math.max(1, r.width/2-knobRadius-4);
+    const rawDist=Math.hypot(dx,dy);
+
+    if(rawDist>max){
+      dx=dx/rawDist*max;
+      dy=dy/rawDist*max;
+    }
+
+    const len=Math.hypot(dx,dy);
+    const magnitude=Math.min(1,len/max);
+    const x=deadzoneMap(dx/max);
+    const y=deadzoneMap(-dy/max);
+
+    knob.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+
+    // 圆周方向箭头：
+    // 上=0°、右=90°、下=180°、左=270°。
+    const angle=Math.atan2(dx,-dy)*180/Math.PI;
+    const angleRad=angle*Math.PI/180;
+
+    // 箭头中心固定在最外层边框之外，不随拖动距离改变半径。
+    const arrowSize=14;
+    const arrowRadius=r.width/2 + arrowSize*.60;
+    const arrowX=Math.sin(angleRad)*arrowRadius;
+    const arrowY=-Math.cos(angleRad)*arrowRadius;
+
+    arrow.style.left=`calc(50% + ${arrowX}px)`;
+    arrow.style.top=`calc(50% + ${arrowY}px)`;
+    arrow.style.transform=`translate(-50%,-50%) rotate(${angle}deg)`;
+    arrow.style.opacity=magnitude<.05 ? "0" : String(.40+.60*magnitude);
+
+    setAxis(x,y);
+  }
+
+  el.addEventListener("pointerdown",e=>{
+    if(pid!==null)return;
+    pid=e.pointerId;
+    el.setPointerCapture(pid);
+    el.classList.add("active");
+    move(e);
+  });
+  el.addEventListener("pointermove",e=>{
+    if(e.pointerId!==pid)return;
+    move(e);
+  });
+  const end=e=>{
+    if(e.pointerId!==pid)return;
+    reset();
+  };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+  el.addEventListener("lostpointercapture", ()=>reset());
+}
+
+document.querySelectorAll(".joystick").forEach(setupJoystick);
+updateReadout();
+</script>
+
+<!-- V4 Layout Architecture:
+     Header Zone
+     Left Button Zone / Center Overlay Zone / Right Button Zone
+     Left Joystick Zone / Bottom Telemetry Zone / Right Joystick Zone
+     Existing visual components intentionally preserved.
+-->
+<!--
+V10 Zone Migration:
+- Header / Main / Bottom are real layout containers.
+- Left/Right Button Zones and Center Overlay are mutually exclusive.
+- Left/Right Joystick Zones and Bottom Telemetry are mutually exclusive.
+- Popup panels must be children of #center-overlay-zone.
+-->
+
+<script>
+(function(){
+
+function closePanels(){
+  document.querySelectorAll(".center-overlay-panel").forEach(p=>{
+    p.hidden = true;
+  });
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+  const robotPanel =
+    document.getElementById("robot-info-panel");
+
+  const statusPanel =
+    document.getElementById("robot-status-panel");
+
+  const leftButtons =
+    document.querySelectorAll(".left-tools button");
+
+  const rightButtons =
+    document.querySelectorAll(".right-tools button");
+
+  if(leftButtons[0]){
+    leftButtons[0].addEventListener("click",(e)=>{
+      e.stopPropagation();
+      const open=!robotPanel.hidden;
+      closePanels();
+      robotPanel.hidden=open;
+    });
+  }
+
+  if(rightButtons[0]){
+    rightButtons[0].addEventListener("click",(e)=>{
+      e.stopPropagation();
+      const open=!statusPanel.hidden;
+      closePanels();
+      statusPanel.hidden=open;
+    });
+  }
+
+  document.addEventListener("click",closePanels);
+
+  document.querySelectorAll(".center-overlay-panel")
+    .forEach(panel=>{
+      panel.addEventListener("click",e=>{
+        e.stopPropagation();
+      });
+    });
+
+});
+
+})();
+</script>
+
+</body>
+</html>

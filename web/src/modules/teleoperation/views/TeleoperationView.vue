@@ -20,7 +20,7 @@ import { MockCameraService } from '../mock/MockCameraService';
 import { useCamera } from '../composables/useCamera';
 import { useTeleoperationSession } from '../composables/useTeleoperationSession';
 import { useTeleoperationLayout } from '../composables/useTeleoperationLayout';
-import type { JoystickAxes } from '../types';
+import type { JoystickSource, JoystickState } from '../types';
 import '../teleoperation.css';
 
 type OpenPanel = 'info' | 'status' | null;
@@ -33,8 +33,10 @@ const {
   error: cameraError,
 } = useCamera(new MockCameraService(), 'ROBOT-01', 'front');
 const stopDisabled = computed(() => connectionStatus.value !== 'connected');
-const leftAxes = ref<JoystickAxes>({ x: 0, y: 0 });
-const rightAxes = ref<JoystickAxes>({ x: 0, y: 0 });
+const joysticks = ref<Record<JoystickSource, JoystickState>>({
+  left: { x: 0, y: 0, active: false },
+  right: { x: 0, y: 0, active: false },
+});
 const openPanel = ref<OpenPanel>(null);
 
 const infoRows = [
@@ -54,6 +56,10 @@ function returnToAgent() {
 
 function togglePanel(panel: Exclude<OpenPanel, null>) {
   openPanel.value = openPanel.value === panel ? null : panel;
+}
+
+function onJoystickChange(source: JoystickSource, state: JoystickState) {
+  joysticks.value = { ...joysticks.value, [source]: state };
 }
 </script>
 
@@ -134,19 +140,19 @@ function togglePanel(panel: Exclude<OpenPanel, null>) {
 
       <template #left-joystick>
         <LeftJoystickZone>
-          <VirtualJoystick label="Left Stick" @change="leftAxes = $event" />
+          <VirtualJoystick id="left" @change="onJoystickChange('left', $event)" />
         </LeftJoystickZone>
       </template>
 
       <template #telemetry>
         <BottomTelemetryZone>
-          <TelemetryReadout :left="leftAxes" :right="rightAxes" />
+          <TelemetryReadout :left="joysticks.left" :right="joysticks.right" />
         </BottomTelemetryZone>
       </template>
 
       <template #right-joystick>
         <RightJoystickZone>
-          <VirtualJoystick label="Right Stick" @change="rightAxes = $event" />
+          <VirtualJoystick id="right" @change="onJoystickChange('right', $event)" />
         </RightJoystickZone>
       </template>
     </TeleoperationLayout>

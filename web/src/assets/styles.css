@@ -1,5 +1,9 @@
 @import './theme.css';
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   color-scheme: light dark;
   font-family: var(--dsw-font-family);

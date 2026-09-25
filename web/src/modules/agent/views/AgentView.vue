@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { PanelRight } from 'lucide-vue-next';
+import { Gamepad2, PanelRight } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
+import { Button } from '@/components/ui';
 import ConversationMainPanel from '../components/ConversationMainPanel.vue';
 import RightRobotPanel from '../components/RightRobotPanel.vue';
 import SidebarRoot from '../components/SidebarRoot.vue';
@@ -8,6 +10,7 @@ import { useAgentLayout } from '../composables/useAgentLayout';
 import { useAgentStore } from '../stores/agent.store';
 import css from './AgentView.module.css';
 
+const router = useRouter();
 const store = useAgentStore();
 const {
   closeSidebarAfterNavigation,
@@ -77,15 +80,27 @@ function selectSession(id: string) {
 
     <RightRobotPanel v-if="rightbarVisible" :class="css.rightColumn" @toggle="toggleRightbar" />
 
-    <button
-      v-if="!narrow && !rightbarExpanded"
-      :class="css.openRightbar"
-      type="button"
-      aria-label="展开 Robot 侧栏"
-      @click="rightbarExpanded = true"
-    >
-      <PanelRight :size="20" />
-    </button>
+    <div :class="css.topActions">
+      <Button
+        variant="ghost"
+        size="icon"
+        title="Teleoperation"
+        aria-label="打开 Teleoperation"
+        @click="router.push('/teleoperation')"
+      >
+        <Gamepad2 :size="20" />
+      </Button>
+
+      <button
+        v-if="!narrow && !rightbarExpanded"
+        :class="css.openRightbar"
+        type="button"
+        aria-label="展开 Robot 侧栏"
+        @click="rightbarExpanded = true"
+      >
+        <PanelRight :size="20" />
+      </button>
+    </div>
 
     <button
       v-if="!sidebarExpanded"

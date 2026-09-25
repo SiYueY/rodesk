@@ -20,6 +20,15 @@
 .rightColumn {
   grid-column: 3;
 }
+.topActions {
+  position: absolute;
+  z-index: 5;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 .openSidebar,
 .openRightbar {
   position: absolute;
@@ -41,7 +50,7 @@
   left: 16px;
 }
 .openRightbar {
-  right: 16px;
+  position: static;
 }
 .openSidebar:hover,
 .openRightbar:hover {

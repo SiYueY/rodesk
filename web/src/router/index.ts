@@ -8,6 +8,11 @@ const router = createRouter({
       name: 'agent-home',
       component: () => import('@/modules/agent/views/AgentView.vue'),
     },
+    {
+      path: '/teleoperation',
+      name: 'teleoperation',
+      component: () => import('@/modules/teleoperation/views/TeleoperationView.vue'),
+    },
     { path: '/agent', redirect: '/' },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

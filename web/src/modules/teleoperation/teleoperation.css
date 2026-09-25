@@ -67,16 +67,16 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
-.teleop-header-zone__info {
-  justify-self: start;
-  font-size: clamp(13px, 1.95vh, 18px);
-  line-height: 1.2;
+.teleoperation-page .teleop-header-zone__back,
+.teleoperation-page .teleop-header-zone__back:hover,
+.teleoperation-page .teleop-header-zone__back:active {
+  background: transparent;
+  color: #fff;
 }
-.teleop-header-zone__info span {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.82em;
-  opacity: 0.92;
+
+.teleop-header-zone__back {
+  justify-self: start;
+  pointer-events: auto;
 }
 .teleop-header-zone__mode {
   justify-self: center;

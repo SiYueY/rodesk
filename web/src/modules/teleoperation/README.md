@@ -6,7 +6,7 @@ Teleoperation HUD 使用 Vue 3 Composition API。视觉与布局以 [HTML 基线
 
 `views/TeleoperationView.vue` 是页面入口，组合 Mock 连接状态、面板开关和左右摇杆读数。`components/layout/TeleoperationLayout.vue` 建立三行布局：
 
-- Header Zone：机器人身份、模式和网络状态。
+- Header Zone：返回 Agent 的透明按钮、模式和网络状态。
 - Middle：Left Button Zone、Center Overlay Zone、Right Button Zone。
 - Bottom：Left Joystick Zone、Bottom Telemetry Zone、Right Joystick Zone。
 

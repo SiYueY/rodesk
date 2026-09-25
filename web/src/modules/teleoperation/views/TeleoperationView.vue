@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { ArrowLeft } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
+import { Button } from '@/components/ui';
 import TeleoperationLayout from '../components/layout/TeleoperationLayout.vue';
 import HeaderZone from '../components/zones/HeaderZone.vue';
 import LeftButtonZone from '../components/zones/LeftButtonZone.vue';
@@ -19,6 +22,7 @@ import type { JoystickAxes } from '../types';
 import '../teleoperation.css';
 
 type OpenPanel = 'info' | 'status' | null;
+const router = useRouter();
 const { connectionStatus, error, stop } = useTeleoperationSession();
 const { layoutStyle } = useTeleoperationLayout();
 const stopDisabled = computed(() => connectionStatus.value !== 'connected');
@@ -37,6 +41,10 @@ const statusRows = [
   { label: 'Temp', value: 'Normal' },
 ];
 
+function returnToAgent() {
+  void router.push('/');
+}
+
 function togglePanel(panel: Exclude<OpenPanel, null>) {
   openPanel.value = openPanel.value === panel ? null : panel;
 }
@@ -47,7 +55,16 @@ function togglePanel(panel: Exclude<OpenPanel, null>) {
     <TeleoperationLayout>
       <template #header>
         <HeaderZone>
-          <div class="teleop-header-zone__info">ROBOT-01<span>Stand Mode</span></div>
+          <Button
+            class="teleop-header-zone__back"
+            variant="ghost"
+            size="icon"
+            type="button"
+            aria-label="返回 Agent"
+            @click.stop="returnToAgent"
+          >
+            <ArrowLeft :size="20" aria-hidden="true" />
+          </Button>
           <div class="teleop-header-zone__mode">常规模式</div>
           <div class="teleop-header-zone__status">5G&nbsp;&nbsp;WiFi&nbsp;&nbsp;82%</div>
         </HeaderZone>

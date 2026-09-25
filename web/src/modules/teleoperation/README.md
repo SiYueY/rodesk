@@ -1,21 +1,28 @@
 # Teleoperation 模块
 
-该模块提供第一版遥操界面与本地 Mock Service。它负责相机占位区、虚拟控制杆、停止操作及页面生命周期内的 Mock 连接状态。
+Teleoperation HUD 使用 Vue 3 Composition API。视觉与布局以 [HTML 基线](../../../../docs/teleoperation/teleoperation.html)（文件内标注 V23.3）和 [设计规范](../../../../docs/teleoperation/teleoperation_design.md)为准。
 
-## 范围
+## 页面结构
 
-- 机器人相机区域仅为静态 UI 占位，不读取摄像头或网络视频流。
-- 左右控制杆仅呈现视觉状态，不发送运动速度。
-- STOP 通过 Mock Service 发送零速度 VelocityCommand。
-- 不包含 WebSocket、ROS、ROS message、geometry_msgs、Twist 或后端接口。
+`views/TeleoperationView.vue` 是页面入口，组合 Mock 连接状态、面板开关和左右摇杆读数。`components/layout/TeleoperationLayout.vue` 建立三行布局：
 
-## 结构
+- Header Zone：机器人身份、模式和网络状态。
+- Middle：Left Button Zone、Center Overlay Zone、Right Button Zone。
+- Bottom：Left Joystick Zone、Bottom Telemetry Zone、Right Joystick Zone。
 
-- components：相机、控制杆和停止控件。
-- composables：临时连接状态与 STOP 行为。
-- services：遥操通信接口与单例组装。
-- mock：可替换的本地 Service 实现。
-- types：与 UI 无关的 VelocityCommand 数据模型。
-- views：页面组合层。
+`components/zones/` 仅拥有空间、尺寸和定位。`teleoperation.css` 保存参考页面的布局尺寸与控件外观；`useTeleoperationLayout` 按参考页面的 V16 公式在视口变化时更新 CSS 变量。
 
-后续接入真实机器人时，以 TeleoperationService 的实现替换 MockTeleoperationService，UI 与速度模型保持不变。
+## 组件关系
+
+- `CenterOverlayZone` 包含全屏相机背景、Robot Info / Robot Status 面板和连接错误。Panel 是 Overlay 的子节点，只在中间区域显示。
+- `LeftJoystickZone` 与 `RightJoystickZone` 分别包含 `VirtualJoystick`。摇杆通过 Pointer Events 输出归一化的 `JoystickAxes`，松开或取消指针时归零。
+- `BottomTelemetryZone` 容纳 `TelemetryReadout`，后者只显示 LX、LY、RX、RY，不发送命令，也不改变摇杆位置。
+- `RightButtonZone` 包含 `StopControl`；STOP 保留连接状态禁用逻辑和 `useTeleoperationSession.stop` 回调。
+
+## 数据与服务边界
+
+`services/TeleoperationService` 定义连接、断开和速度命令接口；当前由 `mock/MockTeleoperationService` 实现。STOP 向 Mock Service 发送零速度命令。摇杆读数只在本地显示，不连接机器人或发送运动速度。相机图像是 HTML 基线使用的静态外部图片。
+
+## 验证
+
+在 `web/` 目录运行 `npm run build`、`npm run lint` 和 `npm run test`。页面视觉对照使用 1920×1080、1366×768、390×844、430×932 四种视口，并分别检查面板打开、摇杆拖动与 STOP。

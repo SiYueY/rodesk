@@ -1,2 +1,2 @@
 export type { VelocityCommand } from './teleoperation';
-export type { JoystickAxes } from './joystick';
+export type { JoystickAxes, JoystickCommand, JoystickSource, JoystickState } from './joystick';

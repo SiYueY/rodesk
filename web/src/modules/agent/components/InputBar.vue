@@ -1,17 +1,71 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import { ArrowUp, ChevronDown, Paperclip, Plus, ShieldCheck, Square } from 'lucide-vue-next';
+import { nextTick, onMounted, onUnmounted, ref, useId, watch } from 'vue';
+import {
+  ArrowUp,
+  ChevronDown,
+  Paperclip,
+  Phone,
+  Plus,
+  ShieldCheck,
+  Square,
+  X,
+} from 'lucide-vue-next';
 import css from './InputBar.module.css';
 
 const props = defineProps<{ sessionId: string | null; running: boolean; empty: boolean }>();
 const emit = defineEmits<{ send: [text: string]; stop: [] }>();
 const draft = ref('');
 const editor = ref<HTMLElement>();
+const callButton = ref<HTMLButtonElement>();
+const callPanel = ref<HTMLElement>();
+const closeCallButton = ref<HTMLButtonElement>();
+const callPanelId = useId();
+const callPanelTitleId = `${callPanelId}-title`;
+const callOpen = ref(false);
+
+function closeCallPanel(restoreFocus = false) {
+  if (!callOpen.value) return;
+  callOpen.value = false;
+  if (restoreFocus) callButton.value?.focus();
+}
+
+function toggleCallPanel() {
+  if (callOpen.value) {
+    closeCallPanel();
+    return;
+  }
+  callOpen.value = true;
+  void nextTick(() => {
+    if (callOpen.value) closeCallButton.value?.focus();
+  });
+}
+
+function onDocumentPointerDown(event: PointerEvent) {
+  if (!callOpen.value || !(event.target instanceof Node)) return;
+  if (callButton.value?.contains(event.target) || callPanel.value?.contains(event.target)) return;
+  closeCallPanel();
+}
+
+function onDocumentKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !callOpen.value) return;
+  event.preventDefault();
+  closeCallPanel(true);
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', onDocumentPointerDown);
+  document.addEventListener('keydown', onDocumentKeydown);
+});
+onUnmounted(() => {
+  document.removeEventListener('pointerdown', onDocumentPointerDown);
+  document.removeEventListener('keydown', onDocumentKeydown);
+});
 watch(
   () => props.sessionId,
   () => {
     draft.value = '';
     if (editor.value) editor.value.replaceChildren();
+    closeCallPanel();
   },
 );
 function updateDraft(event: Event) {
@@ -21,6 +75,7 @@ function updateDraft(event: Event) {
 function submit() {
   const text = draft.value.trim();
   if (!text || props.running) return;
+  closeCallPanel();
   draft.value = '';
   if (editor.value) editor.value.replaceChildren();
   emit('send', text);
@@ -67,6 +122,18 @@ function onKeydown(event: KeyboardEvent) {
             ><ChevronDown :size="14" />
           </button>
           <button
+            ref="callButton"
+            :class="css.callButton"
+            type="button"
+            aria-label="通话"
+            aria-haspopup="dialog"
+            :aria-expanded="callOpen"
+            :aria-controls="callPanelId"
+            @click="toggleCallPanel"
+          >
+            <Phone :size="18" aria-hidden="true" />
+          </button>
+          <button
             v-if="running"
             :class="[css.submit, css.stop]"
             type="button"
@@ -86,6 +153,29 @@ function onKeydown(event: KeyboardEvent) {
             <ArrowUp :size="18" />
           </button>
         </div>
+      </div>
+      <div
+        :id="callPanelId"
+        ref="callPanel"
+        v-show="callOpen"
+        :class="css.callPanel"
+        role="dialog"
+        aria-modal="false"
+        :aria-labelledby="callPanelTitleId"
+      >
+        <div :class="css.callPanelHeader">
+          <strong :id="callPanelTitleId">通话</strong>
+          <button
+            ref="closeCallButton"
+            :class="css.callPanelClose"
+            type="button"
+            aria-label="关闭通话面板"
+            @click="closeCallPanel(true)"
+          >
+            <X :size="16" aria-hidden="true" />
+          </button>
+        </div>
+        <p :class="css.callPanelMessage">通话功能即将开放</p>
       </div>
     </div>
   </section>

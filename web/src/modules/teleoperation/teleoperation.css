@@ -76,7 +76,12 @@
 
 .teleop-header-zone__back {
   justify-self: start;
+  border: 2px solid transparent;
   pointer-events: auto;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 .teleop-header-zone__mode {
   justify-self: center;
@@ -127,6 +132,10 @@
   color: #fff;
   font-size: clamp(15px, 2.2vh, 19px);
   box-shadow: 0 0 8px rgba(120, 170, 255, 0.18);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .teleop-stop {
@@ -146,7 +155,66 @@
     0 2px 10px rgba(0, 0, 0, 0.25),
     0 0 10px rgba(255, 100, 100, 0.15);
   pointer-events: auto;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
+
+.teleoperation-page .teleop-header-zone__back.teleop-button--hovered,
+.teleop-action.teleop-button--hovered {
+  border-color: rgba(220, 245, 255, 0.96);
+  box-shadow:
+    0 0 0 2px rgba(145, 220, 255, 0.48),
+    0 0 20px rgba(95, 190, 255, 0.46);
+}
+
+@media (hover: hover) {
+  .teleop-action--selected {
+    border-color: rgba(220, 245, 255, 0.96);
+    box-shadow:
+      0 0 0 2px rgba(145, 220, 255, 0.48),
+      0 0 20px rgba(95, 190, 255, 0.46);
+  }
+}
+
+.teleop-stop:not(:disabled).teleop-button--hovered {
+  border-color: #ffe1e1;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.25),
+    0 0 0 2px rgba(255, 155, 155, 0.52),
+    0 0 20px rgba(255, 100, 100, 0.48);
+}
+
+.teleoperation-page .teleop-header-zone__back:active,
+.teleop-action:active {
+  border-color: #f3fbff;
+  box-shadow:
+    0 0 0 3px rgba(150, 225, 255, 0.62),
+    0 0 24px rgba(110, 200, 255, 0.58);
+}
+
+.teleop-stop:not(:disabled):active {
+  border-color: #fff1f1;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.25),
+    0 0 0 3px rgba(255, 165, 165, 0.62),
+    0 0 24px rgba(255, 100, 100, 0.62);
+}
+
+.teleoperation-page .teleop-header-zone__back:focus-visible,
+.teleop-action:focus-visible,
+.teleop-stop:not(:disabled):focus-visible {
+  border-color: #f3fbff;
+  outline: 3px solid rgba(220, 245, 255, 0.98);
+  outline-offset: 2px;
+}
+
+.teleop-stop:not(:disabled):focus-visible {
+  border-color: #ffe1e1;
+  outline-color: #ffe1e1;
+}
+
 .teleop-stop:disabled {
   cursor: not-allowed;
 }

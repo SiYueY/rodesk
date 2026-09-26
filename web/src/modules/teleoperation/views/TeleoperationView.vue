@@ -58,13 +58,53 @@ function togglePanel(panel: Exclude<OpenPanel, null>) {
   openPanel.value = openPanel.value === panel ? null : panel;
 }
 
+const hoverableButtonSelector = '.teleop-header-zone__back, .teleop-action, .teleop-stop';
+
+function buttonFromPointer(event: PointerEvent): HTMLButtonElement | null {
+  return event.target instanceof Element
+    ? event.target.closest<HTMLButtonElement>(hoverableButtonSelector)
+    : null;
+}
+
+function onButtonPointerOver(event: PointerEvent) {
+  const button = buttonFromPointer(event);
+  if (
+    !button ||
+    button.disabled ||
+    (event.relatedTarget instanceof Node && button.contains(event.relatedTarget))
+  )
+    return;
+  if (event.pointerType === 'mouse' || (event.pointerType === 'pen' && event.buttons === 0)) {
+    button.classList.add('teleop-button--hovered');
+  }
+}
+
+function onButtonPointerOut(event: PointerEvent) {
+  const button = buttonFromPointer(event);
+  if (button && !(event.relatedTarget instanceof Node && button.contains(event.relatedTarget))) {
+    button.classList.remove('teleop-button--hovered');
+  }
+}
+
+function onButtonPointerDown(event: PointerEvent) {
+  if (event.pointerType === 'touch')
+    buttonFromPointer(event)?.classList.remove('teleop-button--hovered');
+}
+
 function onJoystickChange(source: JoystickSource, state: JoystickState) {
   joysticks.value = { ...joysticks.value, [source]: state };
 }
 </script>
 
 <template>
-  <div class="teleoperation-page" :style="layoutStyle" @click="openPanel = null">
+  <div
+    class="teleoperation-page"
+    :style="layoutStyle"
+    @click="openPanel = null"
+    @pointerover="onButtonPointerOver"
+    @pointerout="onButtonPointerOut"
+    @pointerdown="onButtonPointerDown"
+  >
     <TeleoperationLayout>
       <template #camera>
         <CameraLayer :stream="cameraStream" :status="cameraStatus" :error="cameraError" />
@@ -92,8 +132,10 @@ function onJoystickChange(source: JoystickSource, state: JoystickState) {
           <div class="teleop-tools teleop-tools--left">
             <button
               class="teleop-action"
+              :class="{ 'teleop-action--selected': openPanel === 'info' }"
               type="button"
               aria-label="机器人信息"
+              :aria-expanded="openPanel === 'info'"
               @click.stop="togglePanel('info')"
             >
               人
@@ -127,8 +169,10 @@ function onJoystickChange(source: JoystickSource, state: JoystickState) {
           <div class="teleop-tools teleop-tools--right">
             <button
               class="teleop-action"
+              :class="{ 'teleop-action--selected': openPanel === 'status' }"
               type="button"
               aria-label="机器人状态"
+              :aria-expanded="openPanel === 'status'"
               @click.stop="togglePanel('status')"
             >
               ⌖

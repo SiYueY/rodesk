@@ -13,6 +13,11 @@ const router = createRouter({
       name: 'teleoperation',
       component: () => import('@/modules/teleoperation/views/TeleoperationView.vue'),
     },
+    {
+      path: '/call',
+      name: 'agent-call',
+      component: () => import('@/modules/agent/call/views/AgentCallView.vue'),
+    },
     { path: '/agent', redirect: '/' },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

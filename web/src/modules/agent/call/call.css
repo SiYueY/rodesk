@@ -1,0 +1,632 @@
+.agent-call-page {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  --control-size: clamp(76px, 21vw, 92px);
+  --control-gap-x: clamp(28px, 9vw, 52px);
+  --control-gap-y: clamp(24px, 5.5vh, 40px);
+
+  --control-active-bg: rgba(255, 255, 255, 0.28);
+  --control-off-bg: rgba(0, 0, 0, 0.1);
+  --control-passive-bg: rgba(20, 20, 25, 0.015);
+}
+
+.agent-call-page,
+.agent-call-page * {
+  box-sizing: border-box;
+}
+
+.agent-call-page {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.agent-call-page {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+  background: #000;
+}
+
+/* ===== Media ===== */
+
+.agent-call-page .call-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.agent-call-page .call-media-video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.agent-call-page .call-video-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.02) 36%,
+    rgba(0, 0, 0, 0.1) 60%,
+    rgba(0, 0, 0, 0.56) 100%
+  );
+  transition: background 0.32s ease;
+  pointer-events: none;
+}
+
+.agent-call-page .call-voice-tint {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 177, 211, 0.11), transparent 32%),
+    radial-gradient(circle at 50% 68%, rgba(180, 133, 242, 0.1), transparent 36%),
+    linear-gradient(180deg, rgba(12, 9, 9, 0.25), rgba(10, 8, 8, 0.76));
+  transition:
+    opacity 0.32s ease,
+    visibility 0.32s ease;
+  pointer-events: none;
+}
+
+.agent-call-page .call-voice-orb-wrap {
+  position: absolute;
+  top: 26%;
+  left: 50%;
+  width: min(58vw, 280px);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.32s ease,
+    visibility 0.32s ease;
+}
+
+.agent-call-page .call-voice-orb {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 64% 27%,
+      rgba(255, 244, 199, 0.98) 0 12%,
+      rgba(255, 222, 181, 0.74) 28%,
+      transparent 49%
+    ),
+    radial-gradient(
+      circle at 27% 47%,
+      rgba(246, 168, 209, 0.95) 0 18%,
+      rgba(242, 158, 207, 0.36) 44%,
+      transparent 65%
+    ),
+    radial-gradient(
+      circle at 50% 79%,
+      rgba(181, 136, 239, 0.92) 0 18%,
+      rgba(180, 131, 237, 0.2) 44%,
+      transparent 65%
+    ),
+    linear-gradient(145deg, #f7b89e 0%, #edb9d1 48%, #b995ed 100%);
+  box-shadow:
+    inset 16px -18px 38px rgba(119, 85, 180, 0.1),
+    inset -16px 14px 38px rgba(255, 245, 213, 0.28),
+    0 28px 66px rgba(0, 0, 0, 0.24);
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.agent-call-page .call-voice-orb::before,
+.agent-call-page .call-voice-orb::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(28px);
+  opacity: 0.45;
+}
+
+.agent-call-page .call-voice-orb::before {
+  width: 58%;
+  height: 58%;
+  top: 5%;
+  right: 6%;
+  background: rgba(255, 238, 182, 0.92);
+}
+
+.agent-call-page .call-voice-orb::after {
+  width: 62%;
+  height: 62%;
+  bottom: 4%;
+  left: 4%;
+  background: rgba(192, 130, 236, 0.62);
+}
+
+.agent-call-page.camera-off .call-video-shade {
+  background: rgba(6, 5, 5, 0.3);
+}
+
+.agent-call-page.camera-off .call-voice-tint,
+.agent-call-page.camera-off .call-voice-orb-wrap {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ===== Main overlay ===== */
+
+.agent-call-page .call-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  padding: calc(var(--safe-top) + 18px) calc(var(--safe-right) + 18px)
+    calc(var(--safe-bottom) + 14px) calc(var(--safe-left) + 18px);
+  pointer-events: none;
+}
+
+/* ===== Top bar ===== */
+
+.agent-call-page .call-topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: flex-start;
+  pointer-events: auto;
+}
+
+.agent-call-page .call-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.34));
+}
+
+.agent-call-page .call-icon-btn svg {
+  width: 30px;
+  height: 30px;
+}
+
+.agent-call-page .call-scenario {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  background: rgba(25, 22, 22, 0.5);
+  color: #fff;
+  opacity: 0;
+  visibility: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-size: 17px;
+  font-weight: 650;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.agent-call-page .call-scenario svg {
+  width: 19px;
+  height: 19px;
+}
+
+.agent-call-page.camera-off .call-scenario {
+  opacity: 1;
+  visibility: visible;
+}
+
+.agent-call-page .call-camera-tools {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.agent-call-page.camera-off .call-camera-tools {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ===== Camera source selector ===== */
+
+.agent-call-page .call-camera-source-menu {
+  position: absolute;
+  top: 70px;
+  right: 90px;
+  z-index: 20;
+  display: none;
+  min-width: 220px;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(20, 20, 25, 0.45);
+  color: #fff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.agent-call-page .call-camera-source-menu.show {
+  display: block;
+}
+
+.agent-call-page .call-camera-source-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.agent-call-page .call-camera-source-item:hover,
+.agent-call-page .call-camera-source-item.active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ===== Status ===== */
+
+.agent-call-page .call-status {
+  align-self: end;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: clamp(18px, 3vh, 30px);
+  font-size: clamp(18px, 5vw, 23px);
+  font-weight: 500;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.36);
+  pointer-events: auto;
+}
+
+.agent-call-page .call-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.agent-call-page .call-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  animation: dot 1.2s ease-in-out infinite;
+}
+
+.agent-call-page .call-dots i:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.agent-call-page .call-dots i:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+/* ===== Call controls ===== */
+
+.agent-call-page .call-control-area {
+  justify-self: center;
+  padding-bottom: 20px;
+}
+
+.agent-call-page .call-controls {
+  display: grid;
+  grid-template-columns: repeat(3, var(--control-size));
+  gap: var(--control-gap-y) var(--control-gap-x);
+  pointer-events: auto;
+}
+
+.agent-call-page .call-control {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--control-size);
+  height: var(--control-size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--control-active-bg);
+  color: #050505;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.agent-call-page .call-control:active {
+  transform: scale(0.94);
+}
+
+.agent-call-page .call-control svg {
+  width: 45%;
+  height: 45%;
+}
+
+.agent-call-page .call-control.is-off {
+  background: var(--control-off-bg);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.agent-call-page .call-control.secondary {
+  background: var(--control-passive-bg);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.agent-call-page .call-control.end {
+  background: var(--control-passive-bg);
+  color: #ff594d;
+  box-shadow: none;
+}
+
+.agent-call-page .call-slash {
+  position: absolute;
+  width: 52%;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: rotate(45deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.agent-call-page .call-control.is-off .call-slash {
+  opacity: 1;
+}
+
+/* Subtitle follows the same on/off semantics as the other controls. */
+.agent-call-page .call-control.subtitle {
+  background: var(--control-active-bg);
+  color: #000;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.agent-call-page .call-control.subtitle span {
+  color: inherit;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 1;
+}
+
+.agent-call-page .call-control.subtitle.is-off {
+  background: var(--control-off-bg);
+  color: #fff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.agent-call-page .call-control.subtitle::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  top: 48%;
+  width: 56%;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: rotate(45deg);
+  opacity: 0;
+}
+
+.agent-call-page .call-control.subtitle.is-off::after {
+  opacity: 1;
+}
+
+/* ===== More sheet ===== */
+
+.agent-call-page .call-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.agent-call-page .call-sheet-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.agent-call-page .call-sheet {
+  width: 100%;
+  padding: 14px 18px calc(var(--safe-bottom) + 20px);
+  border-radius: 28px 28px 0 0;
+  background: rgba(246, 246, 248, 0.97);
+  color: #19171c;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.agent-call-page .call-grabber {
+  width: 42px;
+  height: 5px;
+  margin: 0 auto 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.agent-call-page .call-sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.agent-call-page .call-sheet-grid button {
+  min-height: 78px;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+  color: #19171c;
+  font-weight: 600;
+}
+
+/* ===== Toast ===== */
+
+.agent-call-page .call-toast {
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 26px);
+  max-width: calc(100% - 36px);
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(20, 20, 24, 0.84);
+  color: #fff;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 14px);
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease,
+    transform 0.2s ease;
+}
+
+.agent-call-page .call-toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+/* ===== Responsive ===== */
+
+@media (min-width: 760px) {
+  .agent-call-page .call-controls {
+    --control-size: 88px;
+    --control-gap-x: 40px;
+    --control-gap-y: 28px;
+  }
+
+  .agent-call-page .call-voice-orb-wrap {
+    width: 300px;
+  }
+}
+
+@media (max-height: 720px) {
+  .agent-call-page .call-status {
+    margin-bottom: 12px;
+    font-size: 17px;
+  }
+
+  .agent-call-page .call-controls {
+    --control-size: 72px;
+    --control-gap-y: 18px;
+  }
+
+  .agent-call-page .call-control-area {
+    padding-bottom: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-call-page,
+  .agent-call-page *,
+  .agent-call-page *::before,
+  .agent-call-page *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(0.98);
+  }
+
+  50% {
+    transform: scale(1.025);
+  }
+}
+
+@keyframes dot {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.65;
+  }
+
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.agent-call-page .call-camera-source-item {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  line-height: normal;
+  text-align: left;
+}
+.agent-call-page .call-camera-source-item:hover,
+.agent-call-page .call-camera-source-item.active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.agent-call-page .call-status {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.agent-call-page .call-status:disabled,
+.agent-call-page .call-control:disabled {
+  cursor: default;
+}

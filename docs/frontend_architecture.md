@@ -52,6 +52,9 @@ External System
 - Agent 状态
 - Tool Call 展示
 - Task Timeline
+- 独立路由 `/call` 下的通话界面与摄像头来源选择
+
+当前 Call 页面位于 `web/src/modules/agent/call/`。页面临时状态由 composable 管理；CallService 与摄像头适配器隔离外部能力。开发运行时使用 Mock Service 和本地视频，接入真实机器人摄像头时由现有 `useWebRTC` 和注入的 CameraSignaling 提供连接。纯 `MediaStream` 播放器位于 `web/src/components/media/`，由 Call 与 Teleoperation 共用。
 
 目录：
 

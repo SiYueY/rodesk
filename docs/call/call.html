@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>rodesk Call Prototype</title>
+
+<style>
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  --control-size: clamp(76px, 21vw, 92px);
+  --control-gap-x: clamp(28px, 9vw, 52px);
+  --control-gap-y: clamp(24px, 5.5vh, 40px);
+
+  --control-active-bg: rgba(255, 255, 255, .28);
+  --control-off-bg: rgba(0, 0, 0, .10);
+  --control-passive-bg: rgba(20, 20, 25, .015);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font-family:
+    Inter, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  min-height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+  background: #000;
+}
+
+/* ===== Media ===== */
+
+.media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.media-video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.video-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, .10) 0%,
+      rgba(0, 0, 0, .02) 36%,
+      rgba(0, 0, 0, .10) 60%,
+      rgba(0, 0, 0, .56) 100%
+    );
+  transition: background .32s ease;
+  pointer-events: none;
+}
+
+.voice-tint {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(255, 177, 211, .11), transparent 32%),
+    radial-gradient(circle at 50% 68%, rgba(180, 133, 242, .10), transparent 36%),
+    linear-gradient(180deg, rgba(12, 9, 9, .25), rgba(10, 8, 8, .76));
+  transition: opacity .32s ease, visibility .32s ease;
+  pointer-events: none;
+}
+
+.voice-orb-wrap {
+  position: absolute;
+  top: 26%;
+  left: 50%;
+  width: min(58vw, 280px);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .32s ease, visibility .32s ease;
+}
+
+.voice-orb {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 64% 27%, rgba(255, 244, 199, .98) 0 12%, rgba(255, 222, 181, .74) 28%, transparent 49%),
+    radial-gradient(circle at 27% 47%, rgba(246, 168, 209, .95) 0 18%, rgba(242, 158, 207, .36) 44%, transparent 65%),
+    radial-gradient(circle at 50% 79%, rgba(181, 136, 239, .92) 0 18%, rgba(180, 131, 237, .20) 44%, transparent 65%),
+    linear-gradient(145deg, #f7b89e 0%, #edb9d1 48%, #b995ed 100%);
+  box-shadow:
+    inset 16px -18px 38px rgba(119, 85, 180, .10),
+    inset -16px 14px 38px rgba(255, 245, 213, .28),
+    0 28px 66px rgba(0, 0, 0, .24);
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.voice-orb::before,
+.voice-orb::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(28px);
+  opacity: .45;
+}
+
+.voice-orb::before {
+  width: 58%;
+  height: 58%;
+  top: 5%;
+  right: 6%;
+  background: rgba(255, 238, 182, .92);
+}
+
+.voice-orb::after {
+  width: 62%;
+  height: 62%;
+  bottom: 4%;
+  left: 4%;
+  background: rgba(192, 130, 236, .62);
+}
+
+.app.camera-off .video-shade {
+  background: rgba(6, 5, 5, .30);
+}
+
+.app.camera-off .voice-tint,
+.app.camera-off .voice-orb-wrap {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ===== Main overlay ===== */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  padding:
+    calc(var(--safe-top) + 18px)
+    calc(var(--safe-right) + 18px)
+    calc(var(--safe-bottom) + 14px)
+    calc(var(--safe-left) + 18px);
+  pointer-events: none;
+}
+
+/* ===== Top bar ===== */
+
+.topbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: flex-start;
+  pointer-events: auto;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .34));
+}
+
+.icon-btn svg {
+  width: 30px;
+  height: 30px;
+}
+
+.scenario {
+  grid-column: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, .15);
+  border-radius: 999px;
+  background: rgba(25, 22, 22, .50);
+  color: #fff;
+  opacity: 0;
+  visibility: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-size: 17px;
+  font-weight: 650;
+  transition: opacity .2s ease, visibility .2s ease;
+}
+
+.scenario svg {
+  width: 19px;
+  height: 19px;
+}
+
+.app.camera-off .scenario {
+  opacity: 1;
+  visibility: visible;
+}
+
+.camera-tools {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  transition: opacity .2s ease, visibility .2s ease;
+}
+
+.app.camera-off .camera-tools {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* ===== Camera source selector ===== */
+
+.camera-source-menu {
+  position: absolute;
+  top: 70px;
+  right: 90px;
+  z-index: 20;
+  display: none;
+  min-width: 220px;
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(20, 20, 25, .45);
+  color: #fff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.camera-source-menu.show {
+  display: block;
+}
+
+.camera-source-item {
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.camera-source-item:hover,
+.camera-source-item.active {
+  background: rgba(255, 255, 255, .18);
+}
+
+/* ===== Status ===== */
+
+.status {
+  align-self: end;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: clamp(18px, 3vh, 30px);
+  font-size: clamp(18px, 5vw, 23px);
+  font-weight: 500;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, .36);
+  pointer-events: auto;
+}
+
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  animation: dot 1.2s ease-in-out infinite;
+}
+
+.dots i:nth-child(2) {
+  animation-delay: .12s;
+}
+
+.dots i:nth-child(3) {
+  animation-delay: .24s;
+}
+
+/* ===== Call controls ===== */
+
+.control-area {
+  justify-self: center;
+  padding-bottom: 20px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, var(--control-size));
+  gap: var(--control-gap-y) var(--control-gap-x);
+  pointer-events: auto;
+}
+
+.control {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--control-size);
+  height: var(--control-size);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--control-active-bg);
+  color: #050505;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .12);
+  cursor: pointer;
+  transition: transform .12s ease, background .2s ease, color .2s ease;
+}
+
+.control:active {
+  transform: scale(.94);
+}
+
+.control svg {
+  width: 45%;
+  height: 45%;
+}
+
+.control.is-off {
+  background: var(--control-off-bg);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.control.secondary {
+  background: var(--control-passive-bg);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.control.end {
+  background: var(--control-passive-bg);
+  color: #ff594d;
+  box-shadow: none;
+}
+
+.slash {
+  position: absolute;
+  width: 52%;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: rotate(45deg);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.control.is-off .slash {
+  opacity: 1;
+}
+
+/* Subtitle follows the same on/off semantics as the other controls. */
+.control.subtitle {
+  background: var(--control-active-bg);
+  color: #000;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.control.subtitle span {
+  color: inherit;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 1;
+}
+
+.control.subtitle.is-off {
+  background: var(--control-off-bg);
+  color: #fff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.control.subtitle::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  top: 48%;
+  width: 56%;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: rotate(45deg);
+  opacity: 0;
+}
+
+.control.subtitle.is-off::after {
+  opacity: 1;
+}
+
+/* ===== More sheet ===== */
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, .28);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .2s ease, visibility .2s ease;
+}
+
+.sheet-backdrop.open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.sheet {
+  width: 100%;
+  padding: 14px 18px calc(var(--safe-bottom) + 20px);
+  border-radius: 28px 28px 0 0;
+  background: rgba(246, 246, 248, .97);
+  color: #19171c;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.grabber {
+  width: 42px;
+  height: 5px;
+  margin: 0 auto 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .15);
+}
+
+.sheet-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.sheet-grid button {
+  min-height: 78px;
+  border: 0;
+  border-radius: 18px;
+  background: #fff;
+  color: #19171c;
+  font-weight: 600;
+}
+
+/* ===== Toast ===== */
+
+.toast {
+  position: absolute;
+  z-index: 50;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 26px);
+  max-width: calc(100% - 36px);
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(20, 20, 24, .84);
+  color: #fff;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 14px);
+  transition: opacity .2s ease, visibility .2s ease, transform .2s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+/* ===== Responsive ===== */
+
+@media (min-width: 760px) {
+  .controls {
+    --control-size: 88px;
+    --control-gap-x: 40px;
+    --control-gap-y: 28px;
+  }
+
+  .voice-orb-wrap {
+    width: 300px;
+  }
+}
+
+@media (max-height: 720px) {
+  .status {
+    margin-bottom: 12px;
+    font-size: 17px;
+  }
+
+  .controls {
+    --control-size: 72px;
+    --control-gap-y: 18px;
+  }
+
+  .control-area {
+    padding-bottom: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(.98);
+  }
+
+  50% {
+    transform: scale(1.025);
+  }
+}
+
+@keyframes dot {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: .65;
+  }
+
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+</style>
+</head>
+
+<body>
+<main class="app" id="app">
+  <section class="media" aria-hidden="true">
+    <video
+      class="media-video"
+      id="mediaVideo"
+      autoplay
+      muted
+      loop
+      playsinline
+      webkit-playsinline
+      preload="auto"
+    >
+      <source
+        src="https://www.unitree.com/images/7504897529034b05890225e149d3af28.mp4"
+        type="video/mp4"
+      >
+    </video>
+
+    <div class="video-shade"></div>
+    <div class="voice-tint"></div>
+    <div class="voice-orb-wrap">
+      <div class="voice-orb"></div>
+    </div>
+  </section>
+
+  <section class="overlay">
+    <header class="topbar">
+      <button class="scenario" id="scenarioButton" type="button">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+        </svg>
+        <span>选择情景</span>
+      </button>
+
+      <div class="camera-tools">
+        <button
+          class="icon-btn"
+          id="switchButton"
+          type="button"
+          aria-label="选择摄像头来源"
+          aria-haspopup="menu"
+          aria-expanded="false"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="5" y="7" width="10" height="10" rx="2"></rect>
+            <path d="M15 10l4-2v8l-4-2"></path>
+            <path d="M8 4h8"></path>
+            <path d="M8 20h8"></path>
+            <path d="M3 12h2"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div
+        class="camera-source-menu"
+        id="cameraSourceMenu"
+        role="menu"
+        aria-label="摄像头来源"
+      >
+        <div class="camera-source-item active" role="menuitem" data-camera="phone-front">
+          手机前置摄像头
+        </div>
+        <div class="camera-source-item" role="menuitem" data-camera="phone-rear">
+          手机后置摄像头
+        </div>
+        <div class="camera-source-item" role="menuitem" data-camera="robot-head">
+          机器人头部摄像头
+        </div>
+        <div class="camera-source-item" role="menuitem" data-camera="robot-chest">
+          机器人胸部摄像头
+        </div>
+        <div class="camera-source-item" role="menuitem" data-camera="robot-arm">
+          机器人腕部摄像头
+        </div>
+      </div>
+    </header>
+
+    <div></div>
+
+    <div class="status" id="statusButton" role="button" tabindex="0">
+      <span class="dots" id="statusDots">
+        <i></i>
+        <i></i>
+        <i></i>
+      </span>
+      <span id="statusText">你可以开始说话</span>
+    </div>
+
+    <div class="control-area">
+      <div class="controls">
+        <button class="control" id="micButton" type="button" aria-label="麦克风">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path
+              d="M6.5 11.5a5.5 5.5 0 0 0 11 0"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            ></path>
+            <path
+              d="M12 17v4M9 21h6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            ></path>
+          </svg>
+          <span class="slash"></span>
+        </button>
+
+        <button class="control" id="cameraButton" type="button" aria-label="摄像头">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="3" y="6" width="12" height="12" rx="2.4"></rect>
+            <path d="M16 10.2 21 7.7v8.6L16 13.8z"></path>
+          </svg>
+          <span class="slash"></span>
+        </button>
+
+        <button class="control subtitle" id="subtitleButton" type="button" aria-label="字幕">
+          <span>字</span>
+        </button>
+
+        <button class="control" id="speakerButton" type="button" aria-label="扬声器">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M4 9h4l5-4v14l-5-4H4z"></path>
+            <path
+              d="M16 8.2a5 5 0 0 1 0 7.6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            ></path>
+            <path
+              d="M18.5 5.8a8.4 8.4 0 0 1 0 12.4"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            ></path>
+          </svg>
+          <span class="slash"></span>
+        </button>
+
+        <button class="control end" id="endButton" type="button" aria-label="结束通话">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6 6 18"></path>
+          </svg>
+        </button>
+
+        <button class="control secondary" id="moreButton" type="button" aria-label="更多">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="1.8"></circle>
+            <circle cx="12" cy="12" r="1.8"></circle>
+            <circle cx="19" cy="12" r="1.8"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <div class="sheet-backdrop" id="sheetBackdrop">
+    <section class="sheet">
+      <div class="grabber"></div>
+      <div class="sheet-grid">
+        <button type="button">切换情景</button>
+        <button type="button">字幕</button>
+        <button type="button">设备</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</main>
+
+<script>
+const app = document.getElementById('app');
+const mediaVideo = document.getElementById('mediaVideo');
+
+const scenarioButton = document.getElementById('scenarioButton');
+const switchButton = document.getElementById('switchButton');
+const cameraSourceMenu = document.getElementById('cameraSourceMenu');
+const cameraSourceItems = document.querySelectorAll('.camera-source-item');
+
+const statusButton = document.getElementById('statusButton');
+const statusDots = document.getElementById('statusDots');
+const statusText = document.getElementById('statusText');
+
+const micButton = document.getElementById('micButton');
+const cameraButton = document.getElementById('cameraButton');
+const subtitleButton = document.getElementById('subtitleButton');
+const speakerButton = document.getElementById('speakerButton');
+const endButton = document.getElementById('endButton');
+const moreButton = document.getElementById('moreButton');
+
+const sheetBackdrop = document.getElementById('sheetBackdrop');
+const toast = document.getElementById('toast');
+
+const conversationStates = [
+  ['你可以开始说话', true],
+  ['正在聆听…', true],
+  ['正在思考…', true],
+  ['说话或点击打断', false],
+];
+
+let cameraEnabled = true;
+let micEnabled = true;
+let subtitleEnabled = true;
+let speakerEnabled = true;
+let currentCameraSource = 'phone-front';
+let conversationStateIndex = 0;
+let ended = false;
+let toastTimer = 0;
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add('show');
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 1500);
+}
+
+function setControlEnabled(button, enabled) {
+  button.classList.toggle('is-off', !enabled);
+}
+
+function closeCameraSourceMenu() {
+  cameraSourceMenu.classList.remove('show');
+  switchButton.setAttribute('aria-expanded', 'false');
+}
+
+function setCameraEnabled(enabled) {
+  cameraEnabled = enabled;
+  app.classList.toggle('camera-off', !enabled);
+  setControlEnabled(cameraButton, enabled);
+
+  if (!enabled) {
+    closeCameraSourceMenu();
+  }
+}
+
+function selectCameraSource(item) {
+  currentCameraSource = item.dataset.camera;
+
+  cameraSourceItems.forEach((candidate) => {
+    candidate.classList.toggle('active', candidate === item);
+  });
+
+  closeCameraSourceMenu();
+  showToast(`已切换到${item.textContent.trim()}`);
+}
+
+function ensureVideoPlayback() {
+  if (!mediaVideo) return;
+  mediaVideo.play().catch(() => {});
+}
+
+switchButton.addEventListener('click', (event) => {
+  event.stopPropagation();
+
+  const willOpen = !cameraSourceMenu.classList.contains('show');
+  cameraSourceMenu.classList.toggle('show', willOpen);
+  switchButton.setAttribute('aria-expanded', String(willOpen));
+});
+
+cameraSourceItems.forEach((item) => {
+  item.addEventListener('click', () => {
+    selectCameraSource(item);
+  });
+});
+
+document.addEventListener('click', (event) => {
+  if (
+    !event.target.closest('#cameraSourceMenu') &&
+    !event.target.closest('#switchButton')
+  ) {
+    closeCameraSourceMenu();
+  }
+});
+
+cameraButton.addEventListener('click', () => {
+  if (ended) return;
+
+  setCameraEnabled(!cameraEnabled);
+  showToast(cameraEnabled ? '已开启摄像头' : '已切换为语音通话');
+});
+
+micButton.addEventListener('click', () => {
+  if (ended) return;
+
+  micEnabled = !micEnabled;
+  setControlEnabled(micButton, micEnabled);
+  showToast(micEnabled ? '麦克风已开启' : '麦克风已关闭');
+});
+
+subtitleButton.addEventListener('click', () => {
+  if (ended) return;
+
+  subtitleEnabled = !subtitleEnabled;
+  setControlEnabled(subtitleButton, subtitleEnabled);
+  showToast(subtitleEnabled ? '字幕已开启' : '字幕已关闭');
+});
+
+speakerButton.addEventListener('click', () => {
+  if (ended) return;
+
+  speakerEnabled = !speakerEnabled;
+  setControlEnabled(speakerButton, speakerEnabled);
+  showToast(speakerEnabled ? '扬声器已开启' : '扬声器已关闭');
+});
+
+statusButton.addEventListener('click', () => {
+  if (ended) return;
+
+  conversationStateIndex =
+    (conversationStateIndex + 1) % conversationStates.length;
+
+  const [label, showDots] = conversationStates[conversationStateIndex];
+  statusText.textContent = label;
+  statusDots.style.display = showDots ? 'inline-flex' : 'none';
+});
+
+moreButton.addEventListener('click', () => {
+  if (!ended) {
+    sheetBackdrop.classList.add('open');
+  }
+});
+
+sheetBackdrop.addEventListener('click', (event) => {
+  if (event.target === sheetBackdrop) {
+    sheetBackdrop.classList.remove('open');
+  }
+});
+
+scenarioButton.addEventListener('click', () => {
+  if (!ended) {
+    showToast('情景选择器占位');
+  }
+});
+
+endButton.addEventListener('click', () => {
+  if (ended) return;
+
+  ended = true;
+  closeCameraSourceMenu();
+  mediaVideo?.pause();
+  window.location.replace('/');
+});
+
+mediaVideo?.addEventListener('loadeddata', ensureVideoPlayback);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    ensureVideoPlayback();
+  }
+});
+
+setControlEnabled(micButton, micEnabled);
+setCameraEnabled(cameraEnabled);
+setControlEnabled(subtitleButton, subtitleEnabled);
+setControlEnabled(speakerButton, speakerEnabled);
+</script>
+</body>
+</html>

@@ -20,11 +20,11 @@ HUD 保持原有三行 Zone 几何：
 
 ## Camera Layer 与数据流
 
-`MockCameraLayer` 直接在页面内循环播放本地 MP4，并在实际播放后显示 Connected；自动播放失败时提供重试按钮。播放器将完整视频画面按比例置于相机层内，屏幕宽高比不同时留深色空白。真实相机接入时使用 `CameraLayer`、`WebRTCPlayer` 和 `useCamera` 播放 `MediaStream`；离开页面时会断开相机会话并停止视频轨道。
+`MockCameraLayer` 直接在页面内循环播放本地 MP4，并在实际播放后显示 Connected；自动播放失败时提供重试按钮。播放器将完整视频画面按比例置于相机层内，屏幕宽高比不同时留深色空白。真实相机接入时使用 `CameraLayer`、共享的 `MediaStreamPlayer` 和 `useCamera` 播放 `MediaStream`；离开页面时会断开相机会话并停止视频轨道。
 
 真实相机的数据流为：
 
-`CameraService.connect(robotId, cameraId)` → `MediaStream` → `WebRTCPlayer`。
+`CameraService.connect(robotId, cameraId)` → `MediaStream` → `MediaStreamPlayer`。
 
 `useCamera` 管理页面生命周期。`useWebRTC` 负责 `RTCPeerConnection`、ICE 收集、SDP 信令交换、视频轨道和清理；它通过 `CameraSignaling` 接口调用网关适配器，页面不感知 ROS2、camera topic 或后端传输格式。当前没有 Python WebRTC Gateway 的接口实现，页面使用 `MockCameraLayer` 直接播放本地 [`unitree-camera-mock.mp4`](../../../public/media/unitree-camera-mock.mp4)，避免移动浏览器中的 canvas 转流兼容问题。该文件下载自 [Unitree 视频](https://www.unitree.com/images/7504897529034b05890225e149d3af28.mp4)，运行时不依赖外网。接入网关时提供 `CameraSignaling` 实现，并将页面中的 `MockCameraLayer` 换为使用 `useCamera(useWebRTC(signaling))` 的 `CameraLayer`。
 
@@ -36,4 +36,4 @@ HUD 保持原有三行 Zone 几何：
 
 ## 验证
 
-在 `web/` 运行 `npm run build`、`npm run lint` 和 `npm run test`。页面对照使用 1920×1080、1366×768、390×844、430×932 四种视口，检查相机覆盖范围、Panel 所属 Zone、摇杆与按钮几何、视频轨道绑定和页面离开时的清理。
+在 `web/` 运行 `pnpm run build`、`pnpm run lint` 和 `pnpm run test`。页面对照使用 1920×1080、1366×768、390×844、430×932 四种视口，检查相机覆盖范围、Panel 所属 Zone、摇杆与按钮几何、视频轨道绑定和页面离开时的清理。

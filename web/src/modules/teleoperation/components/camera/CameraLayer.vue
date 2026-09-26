@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import WebRTCPlayer from './WebRTCPlayer.vue';
+import MediaStreamPlayer from '@/components/media/MediaStreamPlayer.vue';
 import CameraStatus from './CameraStatus.vue';
 import type { CameraConnectionStatus } from '../../types/camera';
 import './camera.css';
@@ -24,7 +24,12 @@ const displayedError = computed(() => playbackError.value ?? props.error);
 
 <template>
   <div class="teleop-camera-layer">
-    <WebRTCPlayer :stream="stream" @playback-error="playbackError = $event" />
+    <MediaStreamPlayer
+      class="teleop-camera-player"
+      :stream="stream"
+      aria-label="机器人相机画面"
+      @playback-error="playbackError = $event"
+    />
     <CameraStatus :status="displayedStatus" :error="displayedError" />
   </div>
 </template>

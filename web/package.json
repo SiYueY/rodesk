@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.ts,.tsx",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:visual": "playwright test"
   },
   "dependencies": {
     "@vueuse/core": "latest",
@@ -24,12 +25,16 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.2",
+    "@types/pngjs": "^6.0.5",
     "@typescript-eslint/parser": "^8.70.1",
     "@vitejs/plugin-vue": "latest",
     "autoprefixer": "latest",
     "eslint": "latest",
     "eslint-plugin-vue": "latest",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "postcss": "latest",
     "prettier": "latest",
     "prettier-plugin-tailwindcss": "latest",

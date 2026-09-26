@@ -11,6 +11,7 @@
 - services：Agent 通信接口及其组装入口。
 - mock：本地 Mock Adapter，实现流式文本和取消行为。
 - types：独立于 UI 的会话、消息块和流事件模型。
+- call：独立全屏通话页面，包含页面状态、摄像头来源模型、媒体适配器与 Mock Service。
 
 依赖方向为：view → store → service interface → mock implementation。布局开关和拖拽宽度不进入 Pinia，也不会持久化。
 
@@ -21,7 +22,8 @@
 - 左右栏均可隐藏；隐藏后不占布局宽度，并在中央画布角落提供恢复入口。
 - 小于 1024px 时右栏隐藏，左栏以带遮罩的抽屉显示。
 - 输入框在空会话与活动会话之间保持同一实例，支持 Enter 发送、Shift+Enter 换行和停止流式响应。
-- 输入框右侧有通话入口；当前仅打开“通话功能即将开放”浮层，不申请麦克风权限或发起通话。
+- 输入框右侧的电话图标进入 `/call`；结束通话后直接返回 `/`，通话页不显示返回按钮。通话页面使用本地视频与 Mock CallService，尚未连接 Agent Realtime 后端。
+- `/call` 的本地摄像头适配器使用 `getUserMedia`，机器人摄像头适配器复用 Teleoperation 的 `useWebRTC`。在提供 CameraSignaling 前，默认运行时使用 Mock 摄像头，不申请设备权限。
 
 ## 验证
 
@@ -30,3 +32,4 @@
     pnpm run lint
     pnpm run build
     pnpm test
+    pnpm run test:visual

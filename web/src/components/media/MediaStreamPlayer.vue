@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onUnmounted, ref, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 
-const props = defineProps<{ stream: MediaStream | null }>();
+const props = withDefaults(defineProps<{ stream: MediaStream | null; muted?: boolean }>(), {
+  muted: true,
+});
 const emit = defineEmits<{ 'playback-error': [message: string] }>();
 const video = ref<HTMLVideoElement | null>(null);
 
@@ -20,18 +22,11 @@ watch(
   { immediate: true },
 );
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
   if (video.value) video.value.srcObject = null;
 });
 </script>
 
 <template>
-  <video
-    ref="video"
-    class="teleop-camera-player"
-    autoplay
-    playsinline
-    muted
-    aria-label="机器人相机画面"
-  />
+  <video ref="video" autoplay playsinline :muted="muted" />
 </template>

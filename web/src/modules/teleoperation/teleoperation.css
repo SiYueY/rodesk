@@ -28,6 +28,39 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.teleop-rotate-prompt {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.teleop-rotate-prompt--landscape {
+  top: 50%;
+  bottom: auto;
+  left: 50%;
+  width: max-content;
+  transform: translate(-50%, -50%);
+  background: transparent;
+}
+
+.teleop-rotate-prompt button {
+  padding: 12px 20px;
+  border: 1px solid rgba(220, 245, 255, 0.8);
+  border-radius: 12px;
+  background: rgba(30, 45, 70, 0.85);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 .teleoperation-layout {
   position: absolute;
   inset: 0;

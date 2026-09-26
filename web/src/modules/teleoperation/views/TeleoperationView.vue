@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { ArrowLeft } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { Button } from '@/components/ui';
@@ -15,11 +15,10 @@ import OverlayPanel from '../components/controls/OverlayPanel.vue';
 import TelemetryReadout from '../components/controls/TelemetryReadout.vue';
 import VirtualJoystick from '../components/controls/VirtualJoystick.vue';
 import StopControl from '../components/controls/StopControl.vue';
-import CameraLayer from '../components/camera/CameraLayer.vue';
-import { MockCameraService } from '../mock/MockCameraService';
-import { useCamera } from '../composables/useCamera';
+import MockCameraLayer from '../components/camera/MockCameraLayer.vue';
 import { useTeleoperationSession } from '../composables/useTeleoperationSession';
 import { useTeleoperationLayout } from '../composables/useTeleoperationLayout';
+import { enterTeleoperationImmersiveMode, leaveTeleoperationImmersiveMode } from '../immersive';
 import type { JoystickSource, JoystickState } from '../types';
 import '../teleoperation.css';
 
@@ -27,17 +26,39 @@ type OpenPanel = 'info' | 'status' | null;
 const router = useRouter();
 const { connectionStatus, error, stop } = useTeleoperationSession();
 const { layoutStyle } = useTeleoperationLayout();
-const {
-  status: cameraStatus,
-  stream: cameraStream,
-  error: cameraError,
-} = useCamera(new MockCameraService(), 'ROBOT-01', 'front');
 const stopDisabled = computed(() => connectionStatus.value !== 'connected');
 const joysticks = ref<Record<JoystickSource, JoystickState>>({
   left: { x: 0, y: 0, active: false },
   right: { x: 0, y: 0, active: false },
 });
 const openPanel = ref<OpenPanel>(null);
+const touchDevice = ref(false);
+const portrait = ref(false);
+const fullscreen = ref(false);
+const fullscreenSupported = ref(false);
+
+function updateImmersiveState() {
+  touchDevice.value = window.matchMedia('(pointer: coarse)').matches;
+  portrait.value = window.innerHeight > window.innerWidth;
+  fullscreen.value = !!document.fullscreenElement;
+  fullscreenSupported.value = document.fullscreenEnabled;
+}
+
+onMounted(() => {
+  updateImmersiveState();
+  window.addEventListener('resize', updateImmersiveState);
+  document.addEventListener('fullscreenchange', updateImmersiveState);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateImmersiveState);
+  document.removeEventListener('fullscreenchange', updateImmersiveState);
+  leaveTeleoperationImmersiveMode();
+});
+
+function enterImmersiveMode() {
+  void enterTeleoperationImmersiveMode().finally(updateImmersiveState);
+}
 
 const infoRows = [
   { label: 'Model', value: 'Unitree' },
@@ -105,9 +126,23 @@ function onJoystickChange(source: JoystickSource, state: JoystickState) {
     @pointerout="onButtonPointerOut"
     @pointerdown="onButtonPointerDown"
   >
+    <div
+      v-if="touchDevice && (portrait || (fullscreenSupported && !fullscreen))"
+      class="teleop-rotate-prompt"
+      :class="{ 'teleop-rotate-prompt--landscape': !portrait }"
+    >
+      <button
+        v-if="fullscreenSupported && !fullscreen"
+        type="button"
+        @click.stop="enterImmersiveMode"
+      >
+        点击进入横屏全屏
+      </button>
+      <span v-else>请将设备横屏使用</span>
+    </div>
     <TeleoperationLayout>
       <template #camera>
-        <CameraLayer :stream="cameraStream" :status="cameraStatus" :error="cameraError" />
+        <MockCameraLayer />
       </template>
 
       <template #header>

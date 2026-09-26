@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Gamepad2, PanelRight } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { Button } from '@/components/ui';
+import { enterTeleoperationImmersiveMode } from '@/modules/teleoperation/immersive';
 import ConversationMainPanel from '../components/ConversationMainPanel.vue';
 import RightRobotPanel from '../components/RightRobotPanel.vue';
 import SidebarRoot from '../components/SidebarRoot.vue';
@@ -49,6 +50,10 @@ function selectSession(id: string) {
   store.selectSession(id);
   closeSidebarAfterNavigation();
 }
+function openTeleoperation() {
+  void enterTeleoperationImmersiveMode();
+  void router.push('/teleoperation');
+}
 </script>
 
 <template>
@@ -93,7 +98,7 @@ function selectSession(id: string) {
       size="icon"
       title="Teleoperation"
       aria-label="打开 Teleoperation"
-      @click="router.push('/teleoperation')"
+      @click="openTeleoperation"
     >
       <Gamepad2 :size="20" />
     </Button>
